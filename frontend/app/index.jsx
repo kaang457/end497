@@ -10,7 +10,7 @@ import {
   Alert
 } from "react-native";
 import { useRouter } from "expo-router";
-
+import { GlobalStore } from "../constants/store.js";
 export default function FormScreen() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -23,25 +23,17 @@ export default function FormScreen() {
   const hesapla = async () => {
     setLoading(true);
     try {
-      const response = await fetch(
-        "http://YOUR_LOCAL_IP:8000/api/plani-hesapla",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(formData)
-        }
-      );
+      const response = await fetch("http://localhost:8000/api/plani-hesapla", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData)
+      });
       const resData = await response.json();
 
       if (resData.status === "success") {
-        // Navigate to result screen and pass the data
-        router.push({
-          pathname: "/result",
-          params: {
-            data: JSON.stringify(resData),
-            formData: JSON.stringify(formData)
-          }
-        });
+        GlobalStore.planData = resData;
+        GlobalStore.formData = formData;
+        router.push("/results");
       } else {
         Alert.alert("Backend Hatası", resData.message);
       }

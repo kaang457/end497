@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 Created on Fri Feb 20 18:57:12 2026
+
 @author: ozgur
 """
 
@@ -12,6 +13,7 @@ def run(engine):
     
     m1 = pyo.ConcreteModel()
     m1.S = pyo.Set(initialize=engine.final_stations.keys())
+    # Penalty Excel'den geliyor (orijinal değerler)
     p_dict = {s: engine.final_stations[s]["penalty"] for s in engine.final_stations}
     m1.P_cost = pyo.Param(m1.S, initialize=p_dict, default=1_000_000.0)
     m1.missing = pyo.Var(m1.S, domain=pyo.Binary)
@@ -40,22 +42,22 @@ def run(engine):
     N_s = {}
     for i, s in enumerate(active_sorted):
         neighbors = []
-        for j in [i-2, i-1, i+1, i+2]: # +/- 2 kuralı
+        for j in [i-2, i-1, i+1, i+2]:  # +/- 2 kuralı
             if 0 <= j < len(active_sorted):
                 neighbors.append(active_sorted[j])
         N_s[s] = neighbors
 
-    # --- KRİTİK EKLEME: Stage 2'nin kullanımı için hafızaya alıyoruz ---
-    engine.neighbor_map = N_s 
-    # -----------------------------------------------------------------
+    # KRİTİK: Stage 2'nin kullanımı için komşuluk haritasını engine'e kaydediyoruz
+    engine.neighbor_map = N_s
 
     def obj_rule_1(m):
+        # Katsayı: her atama maliyeti penalty ile aynı ölçekte olmalı.
+        # term_reward kaldırıldı — büyük katsayı (5000) modeli bozuyordu.
+        # term_neighbor_reward katsayısı 500'den 10'a indirildi.
         term_time = sum(time_map[w,s] * m.x[w,s] for (w,s) in m.ARCS)
         term_penalty = sum(m.P_cost[s] * m.missing[s] for s in m.S)
-        term_reward = sum(5000 * m.w_active[w] for w in engine.active_workers.keys())
         term_neighbor_reward = sum(10 * m.has_skilled_neighbor[s] for s in m.S)
-        
-        return term_time + term_penalty - term_reward - term_neighbor_reward
+        return term_time + term_penalty - term_neighbor_reward
     
     m1.obj = pyo.Objective(rule=obj_rule_1, sense=pyo.minimize)
     m1.cons = pyo.ConstraintList()
@@ -115,6 +117,7 @@ def run(engine):
                     assigned_workers_set.add(w)
                     break
     
+    # Başarılı komşulukları listeleme
     successful_neighbors = []
     for s in engine.final_stations:
         if engine.final_stations[s]["aktif"]:
@@ -125,6 +128,7 @@ def run(engine):
     engine.log(", ".join(successful_neighbors))
     engine.log("-" * 50)
     
+    # Atanamayan (boşta kalan) işçileri yazdırma
     unassigned_workers = [w for w in engine.active_workers if w not in assigned_workers_set]
     
     engine.log(f"Stage 1 Sonucu: Boşta Kalan (Atanamayan) İşçiler ({len(unassigned_workers)} Kişi):")
@@ -133,5 +137,7 @@ def run(engine):
     else:
         engine.log("Herkes bir istasyona başarıyla atandı. Boşta işçi kalmadı.")
     engine.log("-" * 50)
-    
+    engine.log(f"Stage 1: {len(engine.empty_stations)} bos istasyon, {len(unassigned_workers)} bosta isci")
+    engine.print_stage_summary("STAGE 1")
+
     return unassigned_workers
