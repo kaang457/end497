@@ -46,11 +46,20 @@ class ProductionApp:
         tk.Label(top_frame, text="Ürün Kodu:", bg="#f4f6f7", font=("Segoe UI", 10, "bold")).pack(side=tk.LEFT)
         self.combo_prod = ttk.Combobox(
             top_frame,
-            values=["78446", "97653", "77558", "40132", "77514", "78472"],
+            values=["78446", "97653", "77558", "40132", "77514", "78472", "77777"],
             state="readonly", width=15
         )
         self.combo_prod.current(0)
         self.combo_prod.pack(side=tk.LEFT, padx=5)
+
+        tk.Label(top_frame, text=" |  İşçi Listesi:", bg="#f4f6f7", font=("Segoe UI", 10, "bold")).pack(side=tk.LEFT, padx=(15, 5))
+        self.combo_workers = ttk.Combobox(
+            top_frame,
+            values=["Gerçek İşçiler (A)", "Dummy İşçiler (B)"],
+            state="readonly", width=18
+        )
+        self.combo_workers.current(0)
+        self.combo_workers.pack(side=tk.LEFT, padx=5)
 
         tk.Label(top_frame, text=" |  Vardiya (Saat):", bg="#f4f6f7", font=("Segoe UI", 10, "bold")).pack(side=tk.LEFT, padx=(15, 5))
         self.ent_hours = tk.Entry(top_frame, width=5)
@@ -143,7 +152,8 @@ class ProductionApp:
 
     def start_calculation(self):
         try:
-            self.engine.set_params(self.combo_prod.get(), self.ent_hours.get(), self.ent_qty.get())
+            worker_list = "B" if "Dummy" in self.combo_workers.get() else "A"
+            self.engine.set_params(self.combo_prod.get(), self.ent_hours.get(), self.ent_qty.get(), worker_list)
         except Exception as e:
             messagebox.showerror("Hata", f"Giriş değerlerini kontrol edin: {e}")
             return

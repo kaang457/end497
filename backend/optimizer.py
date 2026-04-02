@@ -27,6 +27,8 @@ class OptimizationEngine:
         
         # Ortak Veri Yapıları
         self.active_workers = {}
+        self.dummy_workers  = {}
+        self.worker_list    = "A"  # varsayilan: gercek isciler
         self.master_db = {}
         self.final_stations = {}
         self.original_sub_ops = {} 
@@ -35,11 +37,14 @@ class OptimizationEngine:
         self.op_to_station = {}
         self.all_station_ids = []
 
-    def set_params(self, product_code, hours, qty):
-        """Ara yüzden gelen parametreleri günceller"""
+    def set_params(self, product_code, hours, qty, worker_list="A"):
+        """Ara yüzden gelen parametreleri günceller
+        worker_list: 'A' = Gerçek işçiler, 'B' = Dummy işçiler
+        """
         self.selected_product = str(product_code)
         self.shift_hours = float(hours)
         self.target_qty = int(qty)
+        self.worker_list = worker_list  # 'A' veya 'B' 
 
     def log(self, msg):
         print(f"[LOG] {msg}") 
@@ -71,16 +76,33 @@ class OptimizationEngine:
                 if val <= 0.01: val = 1.0 
                 if w_name and w_name != 'NAN': perf_db[w_name] = val
 
+
         # 2. Vardiyaya gelen işçileri çek
+        # A sütunu: Gerçek işçiler (active_workers)
+        # B sütunu: Dummy işçiler (dummy_workers)
         self.active_workers = {}
+        self.dummy_workers  = {}
         if "Gelen İşçiler" in xls.sheet_names:
             df_inc = pd.read_excel(xls, sheet_name="Gelen İşçiler", header=None)
             for _, row in df_inc.iterrows():
                 if _ == 0: continue
-                w_name = super_temizle(row[0])
-                if w_name and w_name != 'NAN': 
+                # A sutunu: gercek isci
+                w_name = super_temizle(row[0]) if len(row) > 0 else None
+                if w_name and w_name != 'NAN':
                     self.active_workers[w_name] = perf_db.get(w_name, 1.0)
+                # B sutunu: dummy isci
+                d_name = super_temizle(row[1]) if len(row) > 1 else None
+                if d_name and d_name != 'NAN':
+                    self.dummy_workers[d_name] = perf_db.get(d_name, 1.0)
         else: return "Gelen İşçiler sayfası yok!"
+
+        # Secilen listeye gore active_workers'i guncelle
+        if self.worker_list == "B" and self.dummy_workers:
+            self.log(f"[BİLGİ] Dummy işçi listesi kullanılıyor ({len(self.dummy_workers)} kişi)")
+            self.active_workers = self.dummy_workers
+        else:
+            self.log(f"[BİLGİ] Gerçek işçi listesi kullanılıyor ({len(self.active_workers)} kişi)")
+
 
         # 🚨 EKSİKTİ, GERİ EKLENDİ 🚨: 3. Usta yeteneklerini çek
         self.master_db = {} 
@@ -96,6 +118,7 @@ class OptimizationEngine:
 
         # 4. Reçete ve İstasyon verilerini çek
         recipe_data = {}
+        # Tum urunler icin ayni format: "XXXXX için istasyonlar"
         sheet_name = next((s for s in xls.sheet_names if f"{self.selected_product} için istasyonlar".replace(" ", "").lower() in s.replace(" ", "").lower()), "")
         if not sheet_name: return f"Reçete sayfası bulunamadı!"
         
