@@ -1,20 +1,21 @@
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { colors } from "../styles/theme";
 
 export default function RootLayout() {
   return (
-    // GestureHandlerRootView is required for zooming/panning later
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <StatusBar style="light" />
+      {/* Changed to "dark" since we are using a light minimalistic theme */}
+      <StatusBar style="dark" />
       <Stack
         screenOptions={{
           headerShown: false,
-          contentStyle: { backgroundColor: "#0d1117" }
+          contentStyle: { backgroundColor: colors.background }
         }}
       >
-        <index name="index" />
-        <index name="result" />
+        <Stack.Screen name="index" />
+        <Stack.Screen name="results" />
       </Stack>
     </GestureHandlerRootView>
   );

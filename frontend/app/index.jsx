@@ -4,15 +4,21 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  StyleSheet,
   ScrollView,
   ActivityIndicator,
-  Alert
+  Alert,
+  useWindowDimensions
 } from "react-native";
 import { useRouter } from "expo-router";
-import { GlobalStore } from "../constants/store.js";
+import { getStyles } from "../styles/dynamicStyles";
+import { colors } from "../styles/theme";
+import { GlobalStore } from "../constants/store.js"; // Yolun doğruluğundan emin olun
+
 export default function FormScreen() {
   const router = useRouter();
+  const { width } = useWindowDimensions();
+  const styles = getStyles(width); // Dinamik stilleri enjekte et
+
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     sku: "78446",
@@ -31,16 +37,20 @@ export default function FormScreen() {
       const resData = await response.json();
 
       if (resData.status === "success") {
-        GlobalStore.planData = resData;
+        // Backend'den gelen 'data' objesini (tüm stageleri) doğrudan store'a yaz
+        GlobalStore.planData = resData.data;
         GlobalStore.formData = formData;
         router.push("/results");
       } else {
-        Alert.alert("Backend Hatası", resData.message);
+        Alert.alert(
+          "Backend Hatası",
+          resData.message || "Bilinmeyen bir hata oluştu."
+        );
       }
     } catch (err) {
       Alert.alert(
         "Sistem Hatası",
-        "Backende bağlanılamadı. IP adresinizi kontrol edin."
+        "Backende bağlanılamadı. IP adresinizi kontrol edin veya sunucunun çalıştığından emin olun."
       );
     } finally {
       setLoading(false);
@@ -48,41 +58,50 @@ export default function FormScreen() {
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
+    <ScrollView contentContainerStyle={styles.formScrollContainer}>
       <View style={styles.card}>
-        <Text style={styles.title}>🏭 Üretim Planlama</Text>
+        <Text style={styles.title}>Üretim Planlama</Text>
 
-        <Text style={styles.label}>SKU Seçimi:</Text>
-        <TextInput
-          style={styles.input}
-          value={formData.sku}
-          onChangeText={(t) => setFormData({ ...formData, sku: t })}
-          placeholderTextColor="#8b949e"
-        />
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>SKU Seçimi</Text>
+          <TextInput
+            style={styles.input}
+            value={formData.sku}
+            onChangeText={(t) => setFormData({ ...formData, sku: t })}
+            placeholderTextColor={colors.textSecondary}
+          />
+        </View>
 
-        <Text style={styles.label}>Vardiya (Saat):</Text>
-        <TextInput
-          style={styles.input}
-          keyboardType="numeric"
-          value={formData.vardiya}
-          onChangeText={(t) => setFormData({ ...formData, vardiya: t })}
-        />
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Vardiya (Saat)</Text>
+          <TextInput
+            style={styles.input}
+            keyboardType="numeric"
+            value={formData.vardiya}
+            onChangeText={(t) => setFormData({ ...formData, vardiya: t })}
+            placeholderTextColor={colors.textSecondary}
+          />
+        </View>
 
-        <Text style={styles.label}>Hedef Talep:</Text>
-        <TextInput
-          style={styles.input}
-          keyboardType="numeric"
-          value={formData.demand}
-          onChangeText={(t) => setFormData({ ...formData, demand: t })}
-        />
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Hedef Talep</Text>
+          <TextInput
+            style={styles.input}
+            keyboardType="numeric"
+            value={formData.demand}
+            onChangeText={(t) => setFormData({ ...formData, demand: t })}
+            placeholderTextColor={colors.textSecondary}
+          />
+        </View>
 
         <TouchableOpacity
           style={styles.mainBtn}
           onPress={hesapla}
           disabled={loading}
+          activeOpacity={0.8}
         >
           {loading ? (
-            <ActivityIndicator color="#fff" />
+            <ActivityIndicator color={colors.surface} />
           ) : (
             <Text style={styles.btnText}>HESAPLA</Text>
           )}
@@ -91,44 +110,3 @@ export default function FormScreen() {
     </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flexGrow: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#0d1117"
-  },
-  card: {
-    backgroundColor: "#161b22",
-    padding: 30,
-    borderRadius: 16,
-    width: "90%",
-    borderWidth: 1,
-    borderColor: "#30363d"
-  },
-  title: {
-    color: "#4CAF50",
-    fontSize: 22,
-    fontWeight: "bold",
-    textAlign: "center",
-    marginBottom: 25
-  },
-  label: { color: "#8b949e", marginBottom: 8, fontSize: 14, fontWeight: "600" },
-  input: {
-    backgroundColor: "#0d1117",
-    color: "#fff",
-    padding: 12,
-    borderRadius: 8,
-    borderWith: 1,
-    borderColor: "#30363d",
-    marginBottom: 20
-  },
-  mainBtn: {
-    backgroundColor: "#238636",
-    padding: 15,
-    borderRadius: 8,
-    alignItems: "center"
-  },
-  btnText: { color: "#fff", fontWeight: "bold", fontSize: 16 }
-});

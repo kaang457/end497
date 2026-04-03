@@ -25,10 +25,15 @@ class OptimizationEngine:
         self.total_subproblems_solved = 0
         self.start_time = 0
         
-        # Ortak Veri Yapıları
+        
+        self.output_dir = os.path.join(KLASOR_YOLU, "outputs")
+        os.makedirs(self.output_dir, exist_ok=True)
+        
+        
         self.active_workers = {}
+       
         self.dummy_workers  = {}
-        self.worker_list    = "A"  # varsayilan: gercek isciler
+        self.worker_list    = "A" 
         self.master_db = {}
         self.final_stations = {}
         self.original_sub_ops = {} 
@@ -104,7 +109,7 @@ class OptimizationEngine:
             self.log(f"[BİLGİ] Gerçek işçi listesi kullanılıyor ({len(self.active_workers)} kişi)")
 
 
-        # 🚨 EKSİKTİ, GERİ EKLENDİ 🚨: 3. Usta yeteneklerini çek
+      
         self.master_db = {} 
         if "Master Yetenekleri" in xls.sheet_names:
             df_mst = pd.read_excel(xls, sheet_name="Master Yetenekleri", header=None)
@@ -287,13 +292,18 @@ class OptimizationEngine:
             self.log(f"KRITIK HATA - Excel yuklenemedi: {err}")
             return None, err, {}
 
+        # --- STAGE 1 ---
         pool = stage1.run(self)
+        self.print_stage_summary("STAGE 1")
+        
+        # --- STAGE 2 ---
         remaining_pool, remaining_masters = stage2.run(self, pool)
         self.print_stage_summary("STAGE 2")
         
+        # --- STAGE 3 ---
         stage3.run(self, remaining_pool, remaining_masters)
 
-        # 🚨 EKSİKTİ, GERİ EKLENDİ 🚨: Stage 3 sonu Darboğaz hesaplaması (Stage 4'ün çalışması için şart)
+        # Stage 3 sonu Darboğaz hesaplaması (Stage 4'ün çalışması için şart)
         worker_loads = {}
         for s, info in self.all_assignments.items():
             if s not in self.final_stations: continue
@@ -311,17 +321,23 @@ class OptimizationEngine:
         s3_times = list(worker_loads.values())
         self.stage3_bottleneck = max(s3_times) if s3_times else 0.0
         self.stage3_mean = sum(s3_times) / len(s3_times) if s3_times else 0.0
-
-        stage4.run(self)  # MILP: Varyans minimizasyonu
         
-        # Sonuçları senin harika raporlayıcın ile çıkartıyoruz
+        self.print_stage_summary("STAGE 3")
+
+        
+        stage4.run(self) 
+        self.print_stage_summary("STAGE 4")
+        
+        
         results, stats = self.generate_final_report()
         
         self.last_stats = stats
         stage_summaries = getattr(self, "stage_summaries", {})
         
+        
+        self.print_stage_summary("FINAL")
+        
         return results, stats, stage_summaries
-
     def print_stage_summary(self, stage_name):
         # Hafızayı kontrol et ve başlat
         if not hasattr(self, "stage_summaries"):
@@ -332,13 +348,32 @@ class OptimizationEngine:
             "STAGE 1": "stage1",
             "STAGE 2": "stage2",
             "STAGE 3": "stage3",
-            "STAGE 4": "stage4"
+            "STAGE 4": "stage4",
+            "FINAL": "clean" # Frontend 'clean' bekliyor olabilir
         }
         key = mapping.get(stage_name, stage_name)
         
-        # O anki atama tablosunun bir kopyasını al ve hafızaya at
-        results_flat, _ = self.generate_final_report()
+        # O anki atama tablosunun bir kopyasını al
+        results_flat, stats = self.generate_final_report()
         self.stage_summaries[key] = results_flat
+
+        # --- JSON DOSYASINA YAZDIRMA İŞLEMİ ---
+        output_data = {
+            "stage": key,
+            "status": "success",
+            "stats": stats,
+            "results_flat": results_flat
+        }
+        
+        file_name = f"{key}_data.json"
+        file_path = os.path.join(self.output_dir, file_name)
+        
+        try:
+            with open(file_path, "w", encoding="utf-8") as f:
+                json.dump(output_data, f, ensure_ascii=False, indent=4)
+            self.log(f"[{stage_name}] Sonuçları başarıyla kaydedildi -> {file_name}")
+        except Exception as e:
+            self.log(f"[HATA] {stage_name} json dosyası yazılamadı: {e}")
 
     def export_json(self, p): pass
     def get_iterations(self, r): return 0

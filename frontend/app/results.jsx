@@ -1,109 +1,243 @@
-import React, { useState } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {
   View,
   Text,
   TouchableOpacity,
-  StyleSheet,
   ScrollView,
-  Dimensions
+  ActivityIndicator,
+  useWindowDimensions
 } from "react-native";
 import { useRouter } from "expo-router";
-import { GlobalStore } from "../constants/store"; // Store dosyanızın yolu
+import { getStyles } from "../styles/dynamicStyles";
+import { colors } from "../styles/theme";
+import { GlobalStore } from "../constants/store";
 
 export default function ResultScreen() {
   const router = useRouter();
-  const [activeStage, setActiveStage] = useState("clean");
+  const { width } = useWindowDimensions();
+  const styles = getStyles(width);
 
-  // GlobalStore'dan veriyi çekiyoruz
-  const data = GlobalStore.planData;
+  const [activeStage, setActiveStage] = useState("stage1");
+  const [isFetching, setIsFetching] = useState(false);
+
+  // Store'dan gelen veriyi öncelikli al, yoksa boş obje ile başla
+  const [stageDataCache, setStageDataCache] = useState(() => {
+    if (GlobalStore.planData && Object.keys(GlobalStore.planData).length > 0) {
+      return GlobalStore.planData;
+    }
+    return {};
+  });
+
   const form = GlobalStore.formData;
 
-  if (!data || !data.stages) {
+  // Cache'de ilgili stage yoksa backend'in outputs klasöründen çek
+  useEffect(() => {
+    if (!stageDataCache[activeStage]) {
+      fetchStageData(activeStage);
+    }
+  }, [activeStage]);
+
+  const fetchStageData = async (stageName) => {
+    setIsFetching(true);
+    try {
+      const response = await fetch(
+        `http://localhost:8000/outputs/${stageName}_data.json`
+      );
+      if (response.ok) {
+        const data = await response.json();
+        setStageDataCache((prev) => ({ ...prev, [stageName]: data }));
+      } else {
+        console.warn(`Failed to fetch ${stageName}_data.json`);
+      }
+    } catch (err) {
+      console.error("Error fetching stage data:", err);
+    } finally {
+      setIsFetching(false);
+    }
+  };
+
+  const currentStageData = stageDataCache[activeStage] || {};
+  const flatResults = currentStageData.results_flat || [];
+  const stats = currentStageData.stats || {};
+
+  // 1. Data Parser: Düz listeyi istasyon objelerine çevirir
+  const allStations = useMemo(() => {
+    if (!flatResults || flatResults.length === 0) return [];
+
+    const parsedStations = [];
+    flatResults.forEach((row) => {
+      const seq = row[0];
+      const nameRaw = row[1];
+      const tag = row[6];
+
+      // Alt operasyonları (seq === "") ve kapalı istasyonları filtrele
+      if (seq !== "" && tag !== "DEVRE DIŞI") {
+        const id = nameRaw.replace(" (İstasyon Yükü)", "").trim();
+        const isAssigned = tag !== "BEKLEMEDE" && row[2] !== "ATANMADI";
+
+        parsedStations.push({
+          id: id,
+          status: isAssigned ? "green" : "red",
+          durum: tag,
+          time: row[3] // İstasyon yükü süresi (Örn: "11.94")
+        });
+      }
+    });
+    return parsedStations;
+  }, [flatResults, activeStage]); // activeStage değiştiğinde parse işlemini zorla
+
+  // Yüklenme Ekranı
+  if (isFetching && (!flatResults || flatResults.length === 0)) {
+    return (
+      <View
+        style={[
+          styles.container,
+          { justifyContent: "center", alignItems: "center" }
+        ]}
+      >
+        <ActivityIndicator size="large" color={colors.primary || "#000"} />
+        <Text style={{ color: colors.textSecondary, marginTop: 16 }}>
+          {activeStage === "clean" ? "FINAL" : activeStage.toUpperCase()}{" "}
+          yükleniyor...
+        </Text>
+      </View>
+    );
+  }
+
+  // Hata / Boş Veri Ekranı
+  if (!flatResults || flatResults.length === 0) {
     return (
       <View style={styles.errorContainer}>
-        <Text style={styles.errorText}>Veri yüklenemedi...</Text>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Text style={{ color: "#3b82f6" }}>Geri Dön</Text>
+        <Text style={{ color: colors.textSecondary, marginBottom: 16 }}>
+          Veri yüklenemedi veya boş. Lütfen tekrar hesaplayın.
+        </Text>
+        <TouchableOpacity onPress={() => router.back()}>
+          <Text style={{ color: colors.primary, fontWeight: "600" }}>
+            ← Geri Dön
+          </Text>
         </TouchableOpacity>
       </View>
     );
   }
 
-  // Aktif aşamaya göre istasyon listesini alıyoruz
-  const allStations = data.stages[activeStage] || [];
-
-  // U-Layout Bölümleme Mantığı
+  // U-Layout Düzeni İçin Matematik
   const topCount = Math.floor(allStations.length * 0.42);
   const sideCount = Math.floor(allStations.length * 0.16);
-
   const topLine = allStations.slice(0, topCount);
   const sideLine = allStations.slice(topCount, topCount + sideCount);
   const bottomLine = allStations.slice(topCount + sideCount).reverse();
-
-  const getStageStyle = (stage) =>
-    activeStage === stage ? styles.activeTab : styles.inactiveTab;
 
   return (
     <View style={styles.container}>
       {/* Üst Bar */}
       <View style={styles.topBar}>
-        <View style={styles.topBarLeft}>
-          <TouchableOpacity
-            onPress={() => router.back()}
-            style={styles.backBtn}
-          >
-            <Text style={{ color: "#3b82f6", fontWeight: "bold" }}>← GERİ</Text>
+        <View style={styles.topBarHeader}>
+          <TouchableOpacity onPress={() => router.back()} activeOpacity={0.6}>
+            <Text style={styles.backText}>← Geri</Text>
           </TouchableOpacity>
-          <Text style={styles.headerText}>
-            SKU: {form.sku} | Hedef: {form.demand}
+          <Text style={styles.headerTitle}>
+            SKU: {form?.sku || "Bilinmiyor"} • Hedef:{" "}
+            {form?.demand || "Bilinmiyor"}
           </Text>
         </View>
 
-        {/* Aşama Seçici (Vite'taki butonlar) */}
+        {/* Hap (Pill) Tasarımlı Sekmeler */}
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
-          style={styles.stagePicker}
+          contentContainerStyle={styles.stagePicker}
         >
-          {["clean", "stage1", "stage2", "stage3", "stage4"].map((s) => (
-            <TouchableOpacity
-              key={s}
-              onPress={() => setActiveStage(s)}
-              style={[styles.tab, getStageStyle(s)]}
-            >
-              <Text style={styles.tabText}>
-                {s === "clean" ? "Final" : s.toUpperCase()}
-              </Text>
-            </TouchableOpacity>
-          ))}
+          {["stage1", "stage2", "stage3", "stage4", "clean"].map((s) => {
+            const isActive = activeStage === s;
+            return (
+              <TouchableOpacity
+                key={s}
+                onPress={() => setActiveStage(s)}
+                style={[
+                  styles.tab,
+                  {
+                    backgroundColor: isActive
+                      ? colors.tabActive
+                      : colors.tabInactive
+                  }
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.tabText,
+                    {
+                      color: isActive
+                        ? colors.textPrimary
+                        : colors.textSecondary
+                    }
+                  ]}
+                >
+                  {s === "clean" ? "FINAL" : s.toUpperCase()}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
         </ScrollView>
       </View>
 
-      {/* Hattın Çizimi (Yatay ve Dikey Kaydırma) */}
+      {/* İstatistik Çubuğu */}
+      {stats && Object.keys(stats).length > 0 && (
+        <View style={styles.statsContainer}>
+          <StatBox
+            label="Aktif İstasyon"
+            value={stats.active_stations}
+            styles={styles}
+          />
+          <StatBox
+            label="Darboğaz (Sn)"
+            value={stats.bottleneck_time?.toFixed(2)}
+            styles={styles}
+          />
+          <StatBox
+            label="Atanan Personel"
+            value={stats.assigned_count}
+            styles={styles}
+          />
+          <StatBox
+            label="Üretim Saati"
+            value={`${stats.total_production_hours?.toFixed(2)}h`}
+            styles={styles}
+          />
+        </View>
+      )}
+
+      {/* U-Layout İstasyon Çizimi */}
       <ScrollView horizontal>
         <ScrollView contentContainerStyle={styles.uLayoutScroll}>
           <View style={styles.uContainer}>
-            {/* ANA HAT (ÜST VE ALT) */}
             <View style={styles.mainLineColumn}>
-              {/* Üst Sıra */}
               <View style={styles.stationRow}>
                 {topLine.map((st, i) => (
-                  <StationBox key={st.id || i} station={st} />
+                  <StationBox
+                    key={`top-${activeStage}-${st.id || i}`} // KEY GÜNCELLENDİ
+                    station={st}
+                    styles={styles}
+                  />
                 ))}
               </View>
-
-              {/* Alt Sıra */}
               <View style={styles.stationRow}>
                 {bottomLine.map((st, i) => (
-                  <StationBox key={st.id || i} station={st} />
+                  <StationBox
+                    key={`bot-${activeStage}-${st.id || i}`} // KEY GÜNCELLENDİ
+                    station={st}
+                    styles={styles}
+                  />
                 ))}
               </View>
             </View>
 
-            {/* YAN HAT (SAĞ DİKEY) */}
             <View style={styles.sideLineColumn}>
               {sideLine.map((st, i) => (
-                <StationBox key={st.id || i} station={st} />
+                <StationBox
+                  key={`side-${activeStage}-${st.id || i}`} // KEY GÜNCELLENDİ
+                  station={st}
+                  styles={styles}
+                />
               ))}
             </View>
           </View>
@@ -113,83 +247,40 @@ export default function ResultScreen() {
   );
 }
 
-// İstasyon Kutusu
-const StationBox = ({ station }) => {
+// İstatistik Kutusu Bileşeni
+const StatBox = ({ label, value, styles }) => (
+  <View style={styles.statBox}>
+    <Text style={styles.statLabel}>{label}</Text>
+    <Text style={styles.statValue}>{value || "-"}</Text>
+  </View>
+);
+
+// İstasyon Kutusu Bileşeni
+const StationBox = ({ station, styles }) => {
   const isGreen = station.status === "green";
+  const isSabit = station.durum === "SABIT";
+
+  // Sadece kodu göstermek için "OP_" kısmını at
   const label = station.id?.replace("OP_", "").trim();
+
+  // Duruma göre dinamik renkler
+  const boxStyles = {
+    borderColor: isGreen ? colors.successBorder : colors.dangerBorder,
+    backgroundColor: isGreen ? colors.successBg : colors.dangerBg
+  };
+
+  const textStyles = {
+    color: isGreen ? colors.successText : colors.dangerText
+  };
 
   return (
     <TouchableOpacity
       activeOpacity={0.7}
-      style={[
-        styles.stationBox,
-        {
-          borderColor: isGreen ? "#10b981" : "#ef4444",
-          backgroundColor: isGreen ? "#064e3b" : "#450a0a"
-        }
-      ]}
+      style={[styles.stationBox, boxStyles]}
     >
-      <Text style={styles.stationLabel}>{label}</Text>
-      {station.durum === "SABIT" && <Text style={{ fontSize: 10 }}>⚖️</Text>}
+      <Text style={[styles.stationLabel, textStyles]}>{label}</Text>
+      <Text style={[styles.stationTime, textStyles]}>{station.time}s</Text>
+      {isSabit && <Text style={{ fontSize: 10, marginTop: 4 }}>🔒 SABİT</Text>}
     </TouchableOpacity>
   );
 };
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#0d1117" },
-  errorContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    backgroundColor: "#0d1117"
-  },
-  errorText: { color: "#fff", marginBottom: 20 },
-
-  topBar: {
-    paddingTop: 10,
-    backgroundColor: "#161b22",
-    borderBottomWidth: 1,
-    borderColor: "#30363d"
-  },
-  topBarLeft: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 15,
-    marginBottom: 10
-  },
-  backBtn: { marginRight: 15 },
-  headerText: { color: "#fff", fontWeight: "bold", fontSize: 16 },
-
-  // Aşama Seçici Stilleri
-  stagePicker: { paddingHorizontal: 10, marginBottom: 10 },
-  tab: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 6,
-    marginRight: 8,
-    borderWidth: 1
-  },
-  activeTab: { backgroundColor: "#1e3a8a", borderColor: "#3b82f6" },
-  inactiveTab: { backgroundColor: "#21262d", borderColor: "#30363d" },
-  tabText: { color: "#fff", fontSize: 11, fontWeight: "bold" },
-
-  // Layout Çizimi
-  uLayoutScroll: {
-    padding: 60,
-    minWidth: Dimensions.get("window").width * 1.5
-  },
-  uContainer: { flexDirection: "row" },
-  mainLineColumn: { justifyContent: "space-between", height: 300 },
-  sideLineColumn: { marginLeft: 30, gap: 15, justifyContent: "center" },
-  stationRow: { flexDirection: "row", gap: 15 },
-
-  stationBox: {
-    width: 70,
-    height: 70,
-    borderRadius: 10,
-    borderWidth: 2,
-    alignItems: "center",
-    justifyContent: "center"
-  },
-  stationLabel: { color: "#fff", fontWeight: "bold", fontSize: 13 }
-});
