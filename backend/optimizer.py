@@ -24,7 +24,8 @@ class OptimizationEngine:
         self.total_iterations = 0 
         self.total_subproblems_solved = 0
         self.start_time = 0
-        
+        self.output_dir = os.path.join(KLASOR_YOLU, "outputs")
+        os.makedirs(self.output_dir, exist_ok=True)
         # Ortak Veri Yapıları
         self.active_workers = {}
         self.master_db = {}
