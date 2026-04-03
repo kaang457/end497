@@ -6,16 +6,16 @@ import { colors } from "../styles/theme";
 export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      {/* Changed to "dark" since we are using a light minimalistic theme */}
       <StatusBar style="dark" />
       <Stack
         screenOptions={{
           headerShown: false,
-          contentStyle: { backgroundColor: colors.background }
+          contentStyle: { backgroundColor: colors.background || "#F8F9FA" }
         }}
       >
-        <Stack.Screen name="index" />
-        <Stack.Screen name="results" />
+        <Stack.Screen name="index" /> {/* Yeni Landing Page / Dashboard */}
+        <Stack.Screen name="new-plan" /> {/* Eski Form Ekranı */}
+        <Stack.Screen name="results" /> {/* Güncellenmiş Sonuç Ekranı */}
       </Stack>
     </GestureHandlerRootView>
   );

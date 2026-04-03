@@ -25,15 +25,8 @@ class OptimizationEngine:
         self.total_subproblems_solved = 0
         self.start_time = 0
         
-        
-        self.output_dir = os.path.join(KLASOR_YOLU, "outputs")
-        os.makedirs(self.output_dir, exist_ok=True)
-        
-        
+        # Ortak Veri Yapıları
         self.active_workers = {}
-       
-        self.dummy_workers  = {}
-        self.worker_list    = "A" 
         self.master_db = {}
         self.final_stations = {}
         self.original_sub_ops = {} 
@@ -42,14 +35,12 @@ class OptimizationEngine:
         self.op_to_station = {}
         self.all_station_ids = []
 
-    def set_params(self, product_code, hours, qty, worker_list="A"):
-        """Ara yüzden gelen parametreleri günceller
-        worker_list: 'A' = Gerçek işçiler, 'B' = Dummy işçiler
-        """
+    def set_params(self, product_code, hours, qty, worker_list='A'):
+        """Ara yüzden gelen parametreleri günceller"""
         self.selected_product = str(product_code)
         self.shift_hours = float(hours)
         self.target_qty = int(qty)
-        self.worker_list = worker_list  # 'A' veya 'B' 
+        self.worker_list = worker_list
 
     def log(self, msg):
         print(f"[LOG] {msg}") 
@@ -81,35 +72,18 @@ class OptimizationEngine:
                 if val <= 0.01: val = 1.0 
                 if w_name and w_name != 'NAN': perf_db[w_name] = val
 
-
         # 2. Vardiyaya gelen işçileri çek
-        # A sütunu: Gerçek işçiler (active_workers)
-        # B sütunu: Dummy işçiler (dummy_workers)
         self.active_workers = {}
-        self.dummy_workers  = {}
         if "Gelen İşçiler" in xls.sheet_names:
             df_inc = pd.read_excel(xls, sheet_name="Gelen İşçiler", header=None)
             for _, row in df_inc.iterrows():
                 if _ == 0: continue
-                # A sutunu: gercek isci
-                w_name = super_temizle(row[0]) if len(row) > 0 else None
-                if w_name and w_name != 'NAN':
+                w_name = super_temizle(row[0])
+                if w_name and w_name != 'NAN': 
                     self.active_workers[w_name] = perf_db.get(w_name, 1.0)
-                # B sutunu: dummy isci
-                d_name = super_temizle(row[1]) if len(row) > 1 else None
-                if d_name and d_name != 'NAN':
-                    self.dummy_workers[d_name] = perf_db.get(d_name, 1.0)
         else: return "Gelen İşçiler sayfası yok!"
 
-        # Secilen listeye gore active_workers'i guncelle
-        if self.worker_list == "B" and self.dummy_workers:
-            self.log(f"[BİLGİ] Dummy işçi listesi kullanılıyor ({len(self.dummy_workers)} kişi)")
-            self.active_workers = self.dummy_workers
-        else:
-            self.log(f"[BİLGİ] Gerçek işçi listesi kullanılıyor ({len(self.active_workers)} kişi)")
-
-
-      
+        # 🚨 EKSİKTİ, GERİ EKLENDİ 🚨: 3. Usta yeteneklerini çek
         self.master_db = {} 
         if "Master Yetenekleri" in xls.sheet_names:
             df_mst = pd.read_excel(xls, sheet_name="Master Yetenekleri", header=None)
@@ -123,7 +97,6 @@ class OptimizationEngine:
 
         # 4. Reçete ve İstasyon verilerini çek
         recipe_data = {}
-        # Tum urunler icin ayni format: "XXXXX için istasyonlar"
         sheet_name = next((s for s in xls.sheet_names if f"{self.selected_product} için istasyonlar".replace(" ", "").lower() in s.replace(" ", "").lower()), "")
         if not sheet_name: return f"Reçete sayfası bulunamadı!"
         
@@ -182,82 +155,114 @@ class OptimizationEngine:
         return None
 
     def generate_final_report(self):
-        """Senin arayüzüne uyumlu 10 sütunluk veri üreten ama arkadaşının matematiğini kullanan rapor"""
-        moved_ops = getattr(self, "moved_ops", set())
-        op_status = {}
-        worker_loads = {}
+        """
+        Final rapor:
+        - İstasyon süresi = o istasyondaki işçilerin yüklerinin max'ı
+        - Transfer edilen işler HEDEF istasyonda gösterilir
+        - Verilen işler kaynak istasyonda artık gösterilmez
+        """
+        moved_ops      = getattr(self, "moved_ops", set())
+        fixed_stations = getattr(self, "fixed_stations", set())
 
-        for s_at, info in self.all_assignments.items():
-            main_w = info["worker"]
-            t_type = info.get("type", "NORMAL")
-            spd = self.active_workers.get(main_w, 1.0) if t_type == "NORMAL" else (0.8 if t_type == "MASTER" else 1.2)
-            s3_splits = {n: (t, w, nt) for (n, t, w, nt) in info.get("ops_split", [])}
-            
-            for (op_n, op_std) in self.final_stations[s_at]["sub_ops"]:
-                if op_n in s3_splits:
-                    t_val, w_val, note_val = s3_splits[op_n]
-                else:
-                    t_val, w_val, note_val = op_std * spd, main_w, ""
-                
-                op_status[op_n] = {"time": t_val, "worker": w_val, "station": s_at, "note": note_val}
-                worker_loads[w_val] = worker_loads.get(w_val, 0.0) + t_val
+        # Tüm worker yüklerini hesapla (darboğaz için)
+        worker_loads = {}
+        for s, info in self.all_assignments.items():
+            main_w    = info["worker"]
+            t_type    = info.get("type", "NORMAL")
+            spd       = (self.active_workers.get(main_w, 1.0) if t_type == "NORMAL"
+                         else (0.8 if t_type == "MASTER" else 1.2))
+            ops_split = info.get("ops_split") or []
+            if ops_split:
+                for (_, t, who, _) in ops_split:
+                    worker_loads[who] = worker_loads.get(who, 0.0) + t
+            else:
+                for (_, op_std) in self.final_stations[s]["sub_ops"]:
+                    worker_loads[main_w] = worker_loads.get(main_w, 0.0) + op_std * spd
 
         max_c = max(worker_loads.values()) if worker_loads else 0.0
-        hrs = ((self.target_qty * max_c) + (len(self.all_assignments) * 2.5)) / 3600
+        hrs   = ((self.target_qty * max_c) + (len(self.all_assignments) * 2.5)) / 3600
 
         results_flat = []
+        sorted_stations = sorted(
+            self.all_assignments.keys(),
+            key=lambda x: self.final_stations.get(x, {}).get("seq", 999)
+        )
+
+        # Devre disi ve beklemede istasyonlar
+        assigned_set = set(self.all_assignments.keys())
         for s_orig in self.all_station_ids:
-            # 1. KAYMAYI ÖNLEMEK İÇİN: Herkese istisnasız aynı formattan orijinal sıra atıyoruz
-            orijinal_sira = self.all_station_ids.index(s_orig) + 1
-
             if s_orig not in self.original_sub_ops:
-                results_flat.append((orijinal_sira, s_orig, "DEVRE DIŞI", "0.00", "BOŞ", "-", "DEVRE DIŞI", "-", "-", ""))
-                continue
+                idx = self.all_station_ids.index(s_orig) + 1
+                results_flat.append((idx, s_orig, "DEVRE DIŞI", "0.00", "BOŞ", "-", "DEVRE DIŞI", "-", "-", ""))
+            elif s_orig not in assigned_set:
+                idx = self.all_station_ids.index(s_orig) + 1
+                results_flat.append((idx, f"{s_orig} (İstasyon Yükü)", "ATANMADI", "0.00", "BOŞ", "-", "BEKLEMEDE", "-", "-", ""))
 
-            if s_orig not in self.all_assignments:
-                # 3. BEKLEYEN YEŞİLLER: SKU'da VAR ama henüz kimse atanmamış/boş kalmışsa YEŞİL bırak
-                results_flat.append((orijinal_sira, f"{s_orig} (İstasyon Yükü)", "ATANMADI", "0.00", "BOŞ", "-", "BEKLEMEDE", "-", "-", ""))
-                continue
+        for idx, s in enumerate(sorted_stations, 1):
+            info      = self.all_assignments[s]
+            main_w    = info["worker"]
+            t_type    = info.get("type", "NORMAL")
+            spd       = (self.active_workers.get(main_w, 1.0) if t_type == "NORMAL"
+                         else (0.8 if t_type == "MASTER" else 1.2))
+            ops_split = info.get("ops_split") or []
+            split_map = {n: (t, who, note) for (n, t, who, note) in ops_split} if ops_split else {}
 
-            info = self.all_assignments[s_orig]
-            main_w = info["worker"]
-            original_ops = sorted(self.original_sub_ops[s_orig], key=lambda x: [int(p) if p.isdigit() else p for p in re.split(r'(\d+)', x[0])])
-            istasyon_satir_toplami = sum(op_status.get(op_n, {"time": op_std, "worker": main_w, "station": s_orig, "note": ""})["time"] for op_n, op_std in original_ops)
+            # Güncel oplar (Stage 4 sonrası bu istasyondaki gerçek işler)
+            current_ops = self.final_stations[s]["sub_ops"]
 
-            main_yontem = "Yetkinlik Odaklı Temel Atama"
-            main_detay = "Personel, sahip olduğu operasyon yetkinliği doğrultusunda istasyona ana operatör olarak atanmıştır."
-            if info["type"] == "POOL":
-                main_yontem = "Eğitim Odaklı Temel Atama"
-                main_detay = "Personel, ilgili operasyonda yetkinlik kazanması amacıyla eğitim statüsünde atanmıştır."
-            elif info["type"] == "MASTER":
-                main_yontem = "Usta Ataması"
-                main_detay = "Kritik operasyon yönetimi için usta personel görevlendirilmiştir."
-
-            tag = "SABIT" if s_orig in getattr(self, "fixed_stations", set()) else info["type"]
-            if tag == "POOL": tag = "TAKVIYE (YEDEK)"
-            elif tag == "MASTER": tag = "TAKVIYE (USTA)"
-            elif tag == "NORMAL": tag = "ATANDI"
-            
-            results_flat.append((orijinal_sira, f"{s_orig} (İstasyon Yükü)", "---", f"{istasyon_satir_toplami:.2f}", "-", "-", tag, "-", "-", ""))
-
-            for (op_n, op_std) in original_ops:
-                data = op_status.get(op_n, {"time": op_std, "worker": main_w, "station": s_orig, "note": ""})
-                is_moved = (data["station"] != s_orig)
-                is_help = ("YARDIMCI" in data["note"])
-                row_tag = "STAGE4_MOVED" if is_moved else ("STAGE3_HELPER_ROW" if is_help else "DETAY")
-                durum = f"TRANSFER -> {data['station']}" if is_moved else (data["note"] if is_help else "STANDART")
-                
-                if is_moved:
-                    adaylar = self.final_stations.get(s_orig, {}).get("adaylar", [])
-                    op_yontem = "Eğitimle İş Yükü Dengeleme" if data["worker"] not in adaylar else "Yetkinlikle İş Yükü Dengeleme"
-                    op_detay = f"[TRANSFER -> {data['station']}] İş yükünü dengelemek amacıyla operasyon başka bir istasyona kaydırılmıştır."
-                elif is_help:
-                    op_yontem = "Darboğaz Desteği (Eğitim)" if data["time"] > (op_std * 1.05) else "Darboğaz Desteği (Yetkin)"
-                    op_detay = "[YARDIMCI DESTEĞİ] Hattın en yavaş istasyonunu hızlandırmak için sağlanan personel desteği."
+            # İstasyon süresi: her işçinin yükü → max al
+            station_worker_loads = {}
+            for (op_n, op_std) in current_ops:
+                if op_n in split_map:
+                    t, who, note = split_map[op_n]
                 else:
+                    t, who, note = op_std * spd, main_w, ""
+                station_worker_loads[who] = station_worker_loads.get(who, 0.0) + t
+            istasyon_suresi = max(station_worker_loads.values()) if station_worker_loads else 0.0
+
+            # Tag
+            is_fixed = s in fixed_stations
+            if is_fixed:             tag = "SABIT"
+            elif t_type == "POOL":   tag = "TAKVIYE (YEDEK)"
+            elif t_type == "MASTER": tag = "TAKVIYE (USTA)"
+            else:                    tag = "ATANDI"
+
+            main_yontem = ("Yetkinlik Odaklı Temel Atama" if t_type == "NORMAL"
+                           else ("Eğitim Odaklı Temel Atama" if t_type == "POOL" else "Usta Ataması"))
+            main_detay  = "Personel, sahip olduğu operasyon yetkinliği doğrultusunda istasyona ana operatör olarak atanmıştır."
+
+            results_flat.append((idx, f"{s} (İstasyon Yükü)", "---",
+                                  f"{istasyon_suresi:.2f}", "-", "-", tag, "-", "-", ""))
+
+            # Op satırları — sadece bu istasyondaki GERÇEK oplar
+            for (op_n, op_std) in current_ops:
+                if op_n in split_map:
+                    t_val, w_val, note_val = split_map[op_n]
+                else:
+                    t_val, w_val, note_val = op_std * spd, main_w, ""
+
+                is_transfer = (s, op_n) in moved_ops
+                is_help     = "YARDIMCI" in note_val
+
+                if is_transfer:
+                    row_tag   = "STAGE4_MOVED"
+                    durum     = f"TRANSFER -> {s}"
+                    adaylar   = self.final_stations.get(s, {}).get("adaylar", [])
+                    op_yontem = ("Yetkinlikle İş Yükü Dengeleme" if w_val in adaylar
+                                 else "Eğitimle İş Yükü Dengeleme")
+                    op_detay  = "[TRANSFER] İş yükü dengeleme amacıyla bu istasyona taşındı."
+                elif is_help:
+                    row_tag   = "STAGE3_HELPER_ROW"
+                    durum     = note_val
+                    op_yontem = "Darboğaz Desteği"
+                    op_detay  = "[YARDIMCI DESTEĞİ] Darboğaz istasyonunu hızlandırmak için destek sağlandı."
+                else:
+                    row_tag   = "DETAY"
+                    durum     = "STANDART"
                     op_yontem, op_detay = main_yontem, main_detay
-                
-                results_flat.append(("", "", op_n, "{:.2f}".format(data["time"]), durum, data["worker"], row_tag, op_yontem, op_detay, ""))
+
+                results_flat.append(("", "", op_n, f"{t_val:.2f}",
+                                     durum, w_val, row_tag, op_yontem, op_detay, ""))
 
         count_normal = sum(1 for info in self.all_assignments.values() if info.get("type") == "NORMAL")
         count_pool = sum(1 for info in self.all_assignments.values() if info.get("type") == "POOL")
@@ -292,18 +297,13 @@ class OptimizationEngine:
             self.log(f"KRITIK HATA - Excel yuklenemedi: {err}")
             return None, err, {}
 
-        # --- STAGE 1 ---
         pool = stage1.run(self)
-        self.print_stage_summary("STAGE 1")
-        
-        # --- STAGE 2 ---
         remaining_pool, remaining_masters = stage2.run(self, pool)
         self.print_stage_summary("STAGE 2")
         
-        # --- STAGE 3 ---
         stage3.run(self, remaining_pool, remaining_masters)
 
-        # Stage 3 sonu Darboğaz hesaplaması (Stage 4'ün çalışması için şart)
+        # 🚨 EKSİKTİ, GERİ EKLENDİ 🚨: Stage 3 sonu Darboğaz hesaplaması (Stage 4'ün çalışması için şart)
         worker_loads = {}
         for s, info in self.all_assignments.items():
             if s not in self.final_stations: continue
@@ -321,23 +321,17 @@ class OptimizationEngine:
         s3_times = list(worker_loads.values())
         self.stage3_bottleneck = max(s3_times) if s3_times else 0.0
         self.stage3_mean = sum(s3_times) / len(s3_times) if s3_times else 0.0
-        
-        self.print_stage_summary("STAGE 3")
 
+        stage4.run(self)  # MILP: Varyans minimizasyonu
         
-        stage4.run(self) 
-        self.print_stage_summary("STAGE 4")
-        
-        
+        # Sonuçları senin harika raporlayıcın ile çıkartıyoruz
         results, stats = self.generate_final_report()
         
         self.last_stats = stats
         stage_summaries = getattr(self, "stage_summaries", {})
         
-        
-        self.print_stage_summary("FINAL")
-        
         return results, stats, stage_summaries
+
     def print_stage_summary(self, stage_name):
         # Hafızayı kontrol et ve başlat
         if not hasattr(self, "stage_summaries"):
@@ -348,32 +342,13 @@ class OptimizationEngine:
             "STAGE 1": "stage1",
             "STAGE 2": "stage2",
             "STAGE 3": "stage3",
-            "STAGE 4": "stage4",
-            "FINAL": "clean" # Frontend 'clean' bekliyor olabilir
+            "STAGE 4": "stage4"
         }
         key = mapping.get(stage_name, stage_name)
         
-        # O anki atama tablosunun bir kopyasını al
-        results_flat, stats = self.generate_final_report()
+        # O anki atama tablosunun bir kopyasını al ve hafızaya at
+        results_flat, _ = self.generate_final_report()
         self.stage_summaries[key] = results_flat
-
-        # --- JSON DOSYASINA YAZDIRMA İŞLEMİ ---
-        output_data = {
-            "stage": key,
-            "status": "success",
-            "stats": stats,
-            "results_flat": results_flat
-        }
-        
-        file_name = f"{key}_data.json"
-        file_path = os.path.join(self.output_dir, file_name)
-        
-        try:
-            with open(file_path, "w", encoding="utf-8") as f:
-                json.dump(output_data, f, ensure_ascii=False, indent=4)
-            self.log(f"[{stage_name}] Sonuçları başarıyla kaydedildi -> {file_name}")
-        except Exception as e:
-            self.log(f"[HATA] {stage_name} json dosyası yazılamadı: {e}")
 
     def export_json(self, p): pass
     def get_iterations(self, r): return 0

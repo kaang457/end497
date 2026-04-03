@@ -21,15 +21,15 @@ app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "http://localhost:8081",    # Frontend adresin
-        "http://127.0.0.1:8081",    # Alternatif localhost adresi
+        "http://localhost:8081",    
+        "http://127.0.0.1:8081",    
     ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-# Outputs klasörünü statik olarak dışarıya açma (404 hatasını önlemek/debug için)
+
 OUTPUTS_DIR = os.path.join(BASE_DIR, "outputs")
 if not os.path.exists(OUTPUTS_DIR):
     os.makedirs(OUTPUTS_DIR) 

@@ -1,13 +1,14 @@
 export const colors = {
-  background: "#F8FAFC", // Light slate background
-  surface: "#FFFFFF", // Clean white cards
-  primary: "#0F172A", // Deep slate for main actions (Professional)
-  textPrimary: "#1E293B", // High contrast text
-  textSecondary: "#64748B", // Muted text for labels
-  border: "#E2E8F0", // Subtle borders
-  inputBg: "#F1F5F9", // Very light gray for inputs
+  // --- Genel Uygulama (Aydınlık Tema) ---
+  background: "#F8FAFC",
+  surface: "#FFFFFF",
+  primary: "#2563EB", // Butonlar ve ana eylemler için mavi
+  textPrimary: "#1E293B",
+  textSecondary: "#64748B",
+  border: "#E2E8F0",
+  inputBg: "#F1F5F9",
 
-  // Status Colors
+  // --- Durum (Status) Renkleri ---
   successBg: "#ECFDF5",
   successBorder: "#10B981",
   successText: "#047857",
@@ -16,9 +17,25 @@ export const colors = {
   dangerBorder: "#EF4444",
   dangerText: "#B91C1C",
 
-  // Tabs
-  tabInactive: "transparent",
-  tabActive: "#E2E8F0"
+  warningBg: "#FFFBEB",
+  warningBorder: "#F59E0B",
+  warningText: "#D97706",
+
+  infoBg: "#EFF6FF",
+  infoBorder: "#3B82F6",
+  infoText: "#1D4ED8",
+
+  // --- Üretim Bandı (Dark/Industrial Canvas) ---
+  canvasBg: "#1E1E2F",
+  canvasSurface: "#2A2A40",
+  canvasBorder: "#3A3A50",
+  canvasText: "#9CA3AF",
+
+  // --- Sekmeler (Tabs) ---
+  tabInactive: "#E5E7EB",
+  tabInactiveText: "#4B5563",
+  tabActive: "#2563EB",
+  tabActiveText: "#FFFFFF"
 };
 
 export const spacing = {
