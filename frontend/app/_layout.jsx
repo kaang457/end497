@@ -4,17 +4,17 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 
 export default function RootLayout() {
   return (
-    // GestureHandlerRootView is required for zooming/panning later
-    <GestureHandlerRootView style={{ flex: 1 }}>
+    <GestureHandlerRootView style={{ flex: 1, backgroundColor: "#0d1117" }}>
       <StatusBar style="light" />
       <Stack
         screenOptions={{
           headerShown: false,
-          contentStyle: { backgroundColor: "#0d1117" }
+          contentStyle: { backgroundColor: "#0d1117" },
+          animation: "slide_from_right", // Sayfa geçişlerine akıcılık katar
         }}
       >
-        <index name="index" />
-        <index name="result" />
+        <Stack.Screen name="index" />
+        <Stack.Screen name="results" />
       </Stack>
     </GestureHandlerRootView>
   );
