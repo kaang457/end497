@@ -56,7 +56,7 @@ def run(engine):
         # term_neighbor_reward katsayısı 500'den 10'a indirildi.
         term_time = sum(time_map[w,s] * m.x[w,s] for (w,s) in m.ARCS)
         term_penalty = sum(m.P_cost[s] * m.missing[s] for s in m.S)
-        term_neighbor_reward = sum(10 * m.has_skilled_neighbor[s] for s in m.S)
+        term_neighbor_reward = sum(5000 * m.has_skilled_neighbor[s] for s in m.S)
         return term_time + term_penalty - term_neighbor_reward
     
     m1.obj = pyo.Objective(rule=obj_rule_1, sense=pyo.minimize)
@@ -138,6 +138,22 @@ def run(engine):
         engine.log("Herkes bir istasyona başarıyla atandı. Boşta işçi kalmadı.")
     engine.log("-" * 50)
     engine.log(f"Stage 1: {len(engine.empty_stations)} bos istasyon, {len(unassigned_workers)} bosta isci")
+
+    # --- YENİ EKLENEN KISIM: STAGE 1 SONU MAD VE DARBOĞAZ HESABI ---
+    assigned_times = [info["time"] for info in engine.all_assignments.values()]
+    if assigned_times:
+        mean_load = sum(assigned_times) / len(assigned_times)
+        total_mad = sum(abs(t - mean_load) for t in assigned_times)
+        bottleneck = max(assigned_times)
+        
+        engine.log("-" * 60)
+        engine.log("STAGE 1 SONU METRİKLERİ (Sadece Atananlar İçin):")
+        engine.log(f"  => Darboğaz (Max Süre): {bottleneck:.2f} sn")
+        engine.log(f"  => Ortalama Yük (Mean): {mean_load:.2f} sn")
+        engine.log(f"  => TOPLAM SAPMA (Total MAD): {total_mad:.4f} sn")
+        engine.log("-" * 60)
+    # ---------------------------------------------------------------
+
     engine.print_stage_summary("STAGE 1")
 
     return unassigned_workers
