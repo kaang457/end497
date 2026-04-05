@@ -303,6 +303,9 @@ class OptimizationEngine:
         remaining_pool, remaining_masters = stage2.run(self, pool)
         self.print_stage_summary("STAGE 2")
         
+        # Arkadaşının modelindeki güvenliği kendi koduna ekle:
+        remaining_masters = [m for m in remaining_masters if m in self.active_workers]
+        
         stage3.run(self, remaining_pool, remaining_masters)
 
         # 🚨 EKSİKTİ, GERİ EKLENDİ 🚨: Stage 3 sonu Darboğaz hesaplaması (Stage 4'ün çalışması için şart)

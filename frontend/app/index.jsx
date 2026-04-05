@@ -306,15 +306,54 @@ export default function DashboardScreen() {
       .map(([name, data]) => ({ name, time: data.total, workers: data.workers }))
       .sort((a, b) => b.time - a.time);
 
-    let variance = 0;
-    let stdDev = 0;
+    let variance = 0; // Bu değişkeni artık "Ortalama Sapma" gibi düşünebiliriz
+    let stdDev = 0;   // Bu ise bizim "Toplam Mutlak Sapma" (Total MAD) değerimiz olacak
+    
     if (sortedWorkers.length > 0) {
       const mean = sortedWorkers.reduce((acc, w) => acc + (w.time || 0), 0) / sortedWorkers.length;
-      variance = sortedWorkers.reduce((acc, w) => acc + Math.pow((w.time || 0) - mean, 2), 0) / sortedWorkers.length;
-      stdDev = Math.sqrt(variance);
+      
+      // Standart Sapma (Kare alma) yerine Mutlak Farkların Toplamı (MAD)
+      // Backend ile %100 uyumlu hesaplama
+      const totalMad = sortedWorkers.reduce((acc, w) => acc + Math.abs((w.time || 0) - mean), 0);
+      
+      stdDev = totalMad; // Ekranda görünecek ana sapma değeri
+      variance = totalMad / sortedWorkers.length; // Ortalama kişi başı sapma (isteğe bağlı)
     }
 
     return { sortedWorkers, sortedStations, stdDev, maxWorkerTime: sortedWorkers[0]?.time || 1, maxStationTime: sortedStations[0]?.time || 1 };
+  };
+
+  const exportToExcel = (type) => {
+    if (!planData) return;
+    const sourceRows = planData.clean || planData.stage4 || [];
+    const { sortedWorkers, sortedStations } = generateChartAndTableData(sourceRows);
+    let csvRows = [];
+    if (type === "kisi") {
+      csvRows.push(["Operatör", "Toplam Süre (s)", "İstasyon", "Operasyonlar"]);
+      sortedWorkers.forEach(w => {
+        const stations = Object.entries(w.stationsMap || {});
+        if (stations.length === 0) {
+          csvRows.push([w.name, (w.time || 0).toFixed(2), "-", "-"]);
+        } else {
+          stations.forEach(([st, ops], idx) => {
+            csvRows.push([idx === 0 ? w.name : "", idx === 0 ? (w.time || 0).toFixed(2) : "", st, (ops || []).join(", ")]);
+          });
+        }
+      });
+    } else {
+      csvRows.push(["İstasyon", "Çevrim Süresi (s)", "Çalışan Operatörler"]);
+      sortedStations.forEach(s => {
+        csvRows.push([s.name, (s.time || 0).toFixed(2), s.workers || "-"]);
+      });
+    }
+    const csvContent = "\uFEFF" + csvRows.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(";")).join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = type === "kisi" ? "operatör_listesi.csv" : "istasyon_listesi.csv";
+    link.click();
+    URL.revokeObjectURL(url);
   };
 
   const getGraphSourceData = () => {
@@ -381,7 +420,7 @@ export default function DashboardScreen() {
       return (
         <View style={{ flexDirection: 'row', gap: 8, marginBottom: 8 }}>
           <View style={{ flex: 1, backgroundColor: "rgba(29,78,216,0.12)", borderWidth: 1, borderColor: "#1d4ed8", borderRadius: 7, padding: 8 }}>
-            <Text style={{ color: "#93c5fd", fontSize: 9, marginBottom: 2 }}>✅ Final Sapma</Text>
+            <Text style={{ color: "#93c5fd", fontSize: 9, marginBottom: 2 }}>✅ Final Sapma (Hattaki Toplam Süre Sapması)</Text>
             <Text style={{ color: "#60a5fa", fontSize: 14, fontWeight: "900" }}>{finalDev.toFixed(2)}s</Text>
           </View>
           <View style={{ flex: 1, backgroundColor: "rgba(124,58,237,0.12)", borderWidth: 1, borderColor: "#7c3aed", borderRadius: 7, padding: 8 }}>
@@ -402,7 +441,7 @@ export default function DashboardScreen() {
     return (
       <View style={{ flexDirection: 'row', gap: 8, marginBottom: 8 }}>
         <View style={{ flex: 1, backgroundColor: "rgba(29,78,216,0.12)", borderWidth: 1, borderColor: "#1d4ed8", borderRadius: 7, padding: 8 }}>
-          <Text style={{ color: "#93c5fd", fontSize: 9, marginBottom: 2 }}>📊 Görüntülenen Aşama Sapması</Text>
+          <Text style={{ color: "#93c5fd", fontSize: 9, marginBottom: 2 }}>📊 Görüntülenen Aşama Sapması (Hattaki Toplam Sapma Süresi)</Text>
           <Text style={{ color: "#60a5fa", fontSize: 14, fontWeight: "900" }}>{(activeChartData?.stdDev || 0).toFixed(2)}s</Text>
         </View>
         {/* Orantıyı korumak için sağ tarafa boşluk bırakıyoruz */}
@@ -462,7 +501,7 @@ export default function DashboardScreen() {
               style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", backgroundColor: "#161b22", paddingHorizontal: 8, paddingVertical: 6, borderRadius: 4, borderWidth: 1, borderColor: absentWorkers.length > 0 ? "#ef4444" : "#30363d" }}
             >
               <Text style={{ color: absentWorkers.length > 0 ? "#fca5a5" : "#ffffff", fontSize: 12 }}>
-                🚫 Devamsız Personel {absentWorkers.length > 0 ? `(${absentWorkers.length})` : ""}
+                🚫 Devamsız Personel Seçiniz {absentWorkers.length > 0 ? `(${absentWorkers.length})` : ""}
               </Text>
               <Text style={{ color: "#8b949e", fontSize: 11 }}>{showWorkerPanel ? "▲" : "▼"}</Text>
             </TouchableOpacity>
@@ -604,10 +643,10 @@ export default function DashboardScreen() {
                 <View ref={mapContainerRef} style={[styles.mapContainer, { cursor: isDragging ? 'grabbing' : 'grab' }]} {...panResponder.panHandlers}>
                   <TouchableOpacity style={styles.resetBtn} onPress={resetMap}><Text style={{color: '#fff', fontSize: 10}}>📍 Merkezi Bul</Text></TouchableOpacity>
                   <Animated.View pointerEvents={isDragging ? "none" : "box-none"} style={{ flex: 1, alignItems: 'center', justifyContent: 'center', transform: [{ translateX: pan.x }, { translateY: pan.y }, { scale: scale }] }}>
-                    <View style={{ flexDirection: 'row' }}>
+                    <View style={{ flexDirection: 'row', marginRight: 190 }}>
                       <View style={{ justifyContent: 'space-between' }}>
                         <View style={{ flexDirection: "row", gap: 5, alignSelf: "flex-end" }}>
-                          {topLine.map((st) => <StationBox key={st.id} st={st} scale={scale} threshold={ZOOM_THRESHOLD} showLabel={scale > ZOOM_THRESHOLD} onSelect={setSelectedStation} selectedId={selectedStation?.id} activeStage={activeStage} />)}
+                          {topLine.map((st, idx) => <StationBox key={st.id} st={st} scale={scale} threshold={ZOOM_THRESHOLD} showLabel={scale > ZOOM_THRESHOLD} onSelect={setSelectedStation} selectedId={selectedStation?.id} activeStage={activeStage} direction="up" showArrow={idx >= 2 && (idx - 2) % 5 === 0} />)}
                         </View>
                         <View style={{ height: 50, alignItems: 'center', justifyContent: 'center' }}>
                           <Text style={{ color: "rgba(255,255,255,0.12)", fontSize: 28, fontWeight: "900", letterSpacing: 6, fontFamily: Platform.OS === 'web' ? "'Helvetica Neue', Helvetica, Arial, sans-serif" : undefined, textTransform: "uppercase", textAlign: "center", pointerEvents: "none" }}>
@@ -615,11 +654,11 @@ export default function DashboardScreen() {
                           </Text>
                         </View>
                         <View style={{ flexDirection: "row", gap: 5, alignSelf: "flex-end" }}>
-                          {bottomLine.map((st) => <StationBox key={st.id} st={st} scale={scale} threshold={ZOOM_THRESHOLD} showLabel={scale > ZOOM_THRESHOLD} onSelect={setSelectedStation} selectedId={selectedStation?.id} activeStage={activeStage} />)}
+                          {bottomLine.map((st, idx) => <StationBox key={st.id} st={st} scale={scale} threshold={ZOOM_THRESHOLD} showLabel={scale > ZOOM_THRESHOLD} onSelect={setSelectedStation} selectedId={selectedStation?.id} activeStage={activeStage} direction="down" showArrow={idx >= 2 && (idx - 2) % 5 === 0} />)}
                         </View>
                       </View>
                       <View style={{ marginLeft: 5, gap: 5, flexDirection: "column", justifyContent: 'center' }}>
-                        {sideLine.map((st) => <StationBox key={st.id} st={st} scale={scale} threshold={ZOOM_THRESHOLD} showLabel={scale > ZOOM_THRESHOLD} onSelect={setSelectedStation} selectedId={selectedStation?.id} activeStage={activeStage} />)}
+                        {sideLine.map((st, idx) => <StationBox key={st.id} st={st} scale={scale} threshold={ZOOM_THRESHOLD} showLabel={scale > ZOOM_THRESHOLD} onSelect={setSelectedStation} selectedId={selectedStation?.id} activeStage={activeStage} direction="left" showArrow={idx >= 2 && (idx - 2) % 5 === 0} />)}
                       </View>
                     </View>
                   </Animated.View>
@@ -632,6 +671,11 @@ export default function DashboardScreen() {
                   <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, borderBottomWidth: 1, borderBottomColor: "#30363d", flexWrap: 'wrap', gap: 8 }}>
                     <Text style={{ color: "#fff", fontSize: 18, fontWeight: "bold" }}>👥 Kişi Bazlı Atama Listesi</Text>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                      {planData && Platform.OS === 'web' && (
+                        <TouchableOpacity onPress={() => exportToExcel("kisi")} style={{ flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: "rgba(16,185,129,0.15)", borderWidth: 1, borderColor: "#10b981", borderRadius: 6, paddingHorizontal: 10, paddingVertical: 6 }}>
+                          <Text style={{ color: "#6ee7b7", fontSize: 12, fontWeight: "bold" }}>📥 Excel'e Aktar</Text>
+                        </TouchableOpacity>
+                      )}
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: "#0d1117", borderWidth: 1, borderColor: "#30363d", borderRadius: 6, paddingHorizontal: 10, paddingVertical: 6 }}>
                         <Text style={{ color: "#6b7280", fontSize: 13 }}>🔍</Text>
                         <TextInput
@@ -685,6 +729,11 @@ export default function DashboardScreen() {
                   <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, borderBottomWidth: 1, borderBottomColor: "#30363d", flexWrap: 'wrap', gap: 8 }}>
                     <Text style={{ color: "#fff", fontSize: 18, fontWeight: "bold" }}>🏭 İstasyon Bazlı Atama Listesi</Text>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                      {planData && Platform.OS === 'web' && (
+                        <TouchableOpacity onPress={() => exportToExcel("istasyon")} style={{ flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: "rgba(16,185,129,0.15)", borderWidth: 1, borderColor: "#10b981", borderRadius: 6, paddingHorizontal: 10, paddingVertical: 6 }}>
+                          <Text style={{ color: "#6ee7b7", fontSize: 12, fontWeight: "bold" }}>📥 Excel'e Aktar</Text>
+                        </TouchableOpacity>
+                      )}
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: "#0d1117", borderWidth: 1, borderColor: "#30363d", borderRadius: 6, paddingHorizontal: 10, paddingVertical: 6 }}>
                         <Text style={{ color: "#6b7280", fontSize: 13 }}>🔍</Text>
                         <TextInput
@@ -904,7 +953,7 @@ export default function DashboardScreen() {
   );
 }
 
-const StationBox = ({ st, scale, threshold, showLabel, onSelect, selectedId, activeStage }) => {
+const StationBox = ({ st, scale, threshold, showLabel, onSelect, selectedId, activeStage, direction, showArrow }) => {
   const isSelected = selectedId === st.id;
   const isGreen = st.status === "green";
   
@@ -924,36 +973,117 @@ const StationBox = ({ st, scale, threshold, showLabel, onSelect, selectedId, act
   const rawId = st.id ? st.id.toString() : "";
   const cleanedId = rawId.split("(")[0].replace("OP_", "").trim() || st.sira || "?";
 
+  // Ok ve etiket yönüne göre pozisyon hesapla
+  const arrowColor = isGreen ? "#10b981" : "#ef4444";
+  const labelBg = isGreen ? "rgba(6,78,59,0.95)" : "rgba(69,10,10,0.95)";
+  const labelBorder = isGreen ? "#10b981" : "#ef4444";
+
+  const arrowUp    = direction === "up";
+  const arrowDown  = direction === "down";
+  const arrowLeft  = direction === "left";
+  const arrowRight = direction === "right";
+
+  // Ok çizgisi + etiket container pozisyonları
+  const LINE_LEN = 32; // ok çizgisi uzunluğu (px)
+
+  // Web'de absolute pozisyonlu div ile ok + etiket çiziyoruz
+  const renderArrowLabel = () => {
+    if (!direction || !showArrow || Platform.OS !== 'web') return null;
+
+    let containerStyle = {};
+    let lineStyle = {};
+    let arrowHeadStyle = {};
+    let labelStyle = {};
+
+    if (arrowUp) {
+      containerStyle = { position: 'absolute', bottom: '100%', left: '50%', transform: 'translateX(-50%)', display: 'flex', flexDirection: 'column', alignItems: 'center', pointerEvents: 'none', zIndex: 10 };
+      labelStyle = { marginBottom: 3, backgroundColor: labelBg, border: `1px solid ${labelBorder}`, borderRadius: 4, padding: '3px 8px', whiteSpace: 'nowrap' };
+      lineStyle = { width: 2, height: LINE_LEN, backgroundColor: arrowColor, flexShrink: 0 };
+      arrowHeadStyle = { width: 0, height: 0, borderLeft: '5px solid transparent', borderRight: '5px solid transparent', borderBottom: `7px solid ${arrowColor}`, marginBottom: 0, flexShrink: 0 };
+      return (
+        <div style={containerStyle}>
+          <div style={labelStyle}><span style={{ color: '#fff', fontSize: '22px', fontWeight: '700', letterSpacing: '0.5px' }}>{cleanedId}</span></div>
+          <div style={arrowHeadStyle} />
+          <div style={lineStyle} />
+        </div>
+      );
+    }
+    if (arrowDown) {
+      containerStyle = { position: 'absolute', top: '100%', left: '50%', transform: 'translateX(-50%)', display: 'flex', flexDirection: 'column', alignItems: 'center', pointerEvents: 'none', zIndex: 10 };
+      lineStyle = { width: 2, height: LINE_LEN, backgroundColor: arrowColor, flexShrink: 0 };
+      arrowHeadStyle = { width: 0, height: 0, borderLeft: '5px solid transparent', borderRight: '5px solid transparent', borderTop: `7px solid ${arrowColor}`, flexShrink: 0 };
+      labelStyle = { marginTop: 3, backgroundColor: labelBg, border: `1px solid ${labelBorder}`, borderRadius: 4, padding: '3px 8px', whiteSpace: 'nowrap' };
+      return (
+        <div style={containerStyle}>
+          <div style={lineStyle} />
+          <div style={arrowHeadStyle} />
+          <div style={labelStyle}><span style={{ color: '#fff', fontSize: '22px', fontWeight: '700', letterSpacing: '0.5px' }}>{cleanedId}</span></div>
+        </div>
+      );
+    }
+    if (arrowLeft) {
+      containerStyle = { position: 'absolute', top: '50%', left: '100%', transform: 'translateY(-50%)', display: 'flex', flexDirection: 'row', alignItems: 'center', pointerEvents: 'none', zIndex: 10 };
+      lineStyle = { height: 2, width: LINE_LEN, backgroundColor: arrowColor, flexShrink: 0 };
+      arrowHeadStyle = { width: 0, height: 0, borderTop: '5px solid transparent', borderBottom: '5px solid transparent', borderLeft: `7px solid ${arrowColor}`, flexShrink: 0 };
+      labelStyle = { marginLeft: 3, backgroundColor: labelBg, border: `1px solid ${labelBorder}`, borderRadius: 4, padding: '3px 8px', whiteSpace: 'nowrap' };
+      return (
+        <div style={containerStyle}>
+          <div style={lineStyle} />
+          <div style={arrowHeadStyle} />
+          <div style={labelStyle}><span style={{ color: '#fff', fontSize: '22px', fontWeight: '700', letterSpacing: '0.5px' }}>{cleanedId}</span></div>
+        </div>
+      );
+    }
+    if (arrowRight) {
+      // Ok soldan çıkar (kutunun sol tarafına yapışır), etiket solda
+      containerStyle = { position: 'absolute', top: '50%', right: '100%', transform: 'translateY(-50%)', display: 'flex', flexDirection: 'row-reverse', alignItems: 'center', pointerEvents: 'none', zIndex: 10 };
+      lineStyle = { height: 2, width: LINE_LEN, backgroundColor: arrowColor, flexShrink: 0 };
+      arrowHeadStyle = { width: 0, height: 0, borderTop: '5px solid transparent', borderBottom: '5px solid transparent', borderRight: `7px solid ${arrowColor}`, flexShrink: 0 };
+      labelStyle = { marginRight: 3, backgroundColor: labelBg, border: `1px solid ${labelBorder}`, borderRadius: 4, padding: '3px 8px', whiteSpace: 'nowrap' };
+      return (
+        <div style={containerStyle}>
+          <div style={lineStyle} />
+          <div style={arrowHeadStyle} />
+          <div style={labelStyle}><span style={{ color: '#fff', fontSize: '22px', fontWeight: '700', letterSpacing: '0.5px' }}>{cleanedId}</span></div>
+        </div>
+      );
+    }
+    return null;
+  };
+
   return (
-    <TouchableOpacity
-      activeOpacity={0.8} onPress={() => onSelect(st)}
-      style={{
-        width: 55, height: 55, borderRadius: 6, borderWidth: 1.5, alignItems: "center", justifyContent: "center",
-        backgroundColor: isSelected ? "#1e3a8a" : (isGreen ? "#064e3b" : "#450a0a"),
-        borderColor: isSelected ? "#3b82f6" : (isGreen ? "#10b981" : "#ef4444"), 
-        position: "relative", 
-        paddingHorizontal: 1 
-      }}
-    >
-      {showLabel ? (
-        <Text 
-          numberOfLines={2} 
-          adjustsFontSizeToFit 
-          minimumFontScale={0.4} 
-          style={{ fontSize: 9.5, fontWeight: "bold", color: "#fff", textAlign: "center", lineHeight: 11 }}
-        >
-          {cleanedId}
-        </Text>
-      ) : (
-        <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: "#fff", opacity: 0.8 }} />
-      )}
-      
-      {badgeIcon && (
-        <View style={{ position: "absolute", top: -8, right: -8, backgroundColor: "#161b22", borderWidth: 1.5, borderColor: badgeColor, borderRadius: 11, width: 22, height: 22, alignItems: "center", justifyContent: "center", zIndex: 5 }}>
-          <Text style={{ color: badgeColor, fontSize: 11, fontWeight: "bold" }}>{badgeIcon}</Text>
-        </View>
-      )}
-    </TouchableOpacity>
+    <div style={{ position: 'relative', display: 'inline-block' }}>
+      {renderArrowLabel()}
+      <TouchableOpacity
+        activeOpacity={0.8} onPress={() => onSelect(st)}
+        style={{
+          width: 55, height: 55, borderRadius: 6, borderWidth: 1.5, alignItems: "center", justifyContent: "center",
+          backgroundColor: isSelected ? "#1e3a8a" : (isGreen ? "#064e3b" : "#450a0a"),
+          borderColor: isSelected ? "#3b82f6" : (isGreen ? "#10b981" : "#ef4444"), 
+          position: "relative", 
+          paddingHorizontal: 1 
+        }}
+      >
+        {showLabel ? (
+          <Text 
+            numberOfLines={2} 
+            adjustsFontSizeToFit 
+            minimumFontScale={0.4} 
+            style={{ fontSize: 9.5, fontWeight: "bold", color: "#fff", textAlign: "center", lineHeight: 11 }}
+          >
+            {cleanedId}
+          </Text>
+        ) : (
+          <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: "#fff", opacity: 0.8 }} />
+        )}
+        
+        {badgeIcon && (
+          <View style={{ position: "absolute", top: -8, right: -8, backgroundColor: "#161b22", borderWidth: 1.5, borderColor: badgeColor, borderRadius: 11, width: 22, height: 22, alignItems: "center", justifyContent: "center", zIndex: 5 }}>
+            <Text style={{ color: badgeColor, fontSize: 11, fontWeight: "bold" }}>{badgeIcon}</Text>
+          </View>
+        )}
+      </TouchableOpacity>
+    </div>
   );
 };
 
