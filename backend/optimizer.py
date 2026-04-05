@@ -24,10 +24,11 @@ class OptimizationEngine:
         self.total_iterations = 0 
         self.total_subproblems_solved = 0
         self.start_time = 0
-        self.output_dir = os.path.join(KLASOR_YOLU, "outputs")
-        os.makedirs(self.output_dir, exist_ok=True)
+        
         # Ortak Veri Yapıları
         self.active_workers = {}
+        self.dummy_workers  = {}
+        self.worker_list    = "A"
         self.master_db = {}
         self.final_stations = {}
         self.original_sub_ops = {} 
@@ -36,14 +37,12 @@ class OptimizationEngine:
         self.op_to_station = {}
         self.all_station_ids = []
 
-    def set_params(self, product_code, hours, qty, worker_list='A', absent_workers=None):
-        """Ara yüzden gelen parametreleri günceller"""
+    def set_params(self, product_code, hours, qty,worker_list='A'):
+        
         self.selected_product = str(product_code)
         self.shift_hours = float(hours)
         self.target_qty = int(qty)
         self.worker_list = worker_list
-        # Web arayüzünden seçilen DEVAMSIZ işçiler (bunlar active_workers'dan çıkarılır)
-        self.absent_workers = set(w.strip().upper() for w in (absent_workers or []))
 
     def log(self, msg):
         print(f"[LOG] {msg}") 
@@ -75,15 +74,26 @@ class OptimizationEngine:
                 if val <= 0.01: val = 1.0 
                 if w_name and w_name != 'NAN': perf_db[w_name] = val
 
-        # 2. Vardiyaya gelen işçileri çek (ARTIK EXCEL'DEKİ "GELEN İŞÇİLER" İPTAL!)
+        # 2. Vardiyaya gelen işçileri çek
         self.active_workers = {}
-        absent = getattr(self, 'absent_workers', set())
-        
-        for w_name, w_perf in perf_db.items():
-            if w_name in absent:
-                self.log(f"[DEVAMSIZLIK] {w_name} listeden çıkarıldı (web'den işaretlendi).")
-                continue
-            self.active_workers[w_name] = w_perf
+        self.dummy_workers  = {}
+        if "Gelen İşçiler" in xls.sheet_names:
+            df_inc = pd.read_excel(xls, sheet_name="Gelen İşçiler", header=None)
+            for _, row in df_inc.iterrows():
+                if _ == 0: continue
+                w_name = super_temizle(row[0]) if len(row) > 0 else None
+                if w_name and w_name != 'NAN':
+                    self.active_workers[w_name] = perf_db.get(w_name, 1.0)
+                d_name = super_temizle(row[1]) if len(row) > 1 else None
+                if d_name and d_name != 'NAN':
+                    self.dummy_workers[d_name] = perf_db.get(d_name, 1.0)
+        else: return "Gelen İşçiler sayfası yok!"
+
+        if self.worker_list == "B" and self.dummy_workers:
+            self.log(f"[BİLGİ] Dummy işçi listesi kullanılıyor ({len(self.dummy_workers)} kişi)")
+            self.active_workers = self.dummy_workers
+        else:
+            self.log(f"[BİLGİ] Gerçek işçi listesi kullanılıyor ({len(self.active_workers)} kişi)")
 
         # 🚨 EKSİKTİ, GERİ EKLENDİ 🚨: 3. Usta yeteneklerini çek
         self.master_db = {} 
@@ -166,7 +176,6 @@ class OptimizationEngine:
         moved_ops      = getattr(self, "moved_ops", set())
         fixed_stations = getattr(self, "fixed_stations", set())
 
-        # Tüm worker yüklerini hesapla (darboğaz için)
         worker_loads = {}
         for s, info in self.all_assignments.items():
             main_w    = info["worker"]
@@ -175,7 +184,7 @@ class OptimizationEngine:
                          else (0.8 if t_type == "MASTER" else 1.2))
             ops_split = info.get("ops_split") or []
             if ops_split:
-                for (_, t, who, _) in ops_split:
+                for (_, t, who, _n) in ops_split:
                     worker_loads[who] = worker_loads.get(who, 0.0) + t
             else:
                 for (_, op_std) in self.final_stations[s]["sub_ops"]:
@@ -184,14 +193,13 @@ class OptimizationEngine:
         max_c = max(worker_loads.values()) if worker_loads else 0.0
         hrs   = ((self.target_qty * max_c) + (len(self.all_assignments) * 2.5)) / 3600
 
-        results_flat = []
+        results_flat   = []
+        assigned_set   = set(self.all_assignments.keys())
         sorted_stations = sorted(
             self.all_assignments.keys(),
             key=lambda x: self.final_stations.get(x, {}).get("seq", 999)
         )
 
-        # Devre disi ve beklemede istasyonlar
-        assigned_set = set(self.all_assignments.keys())
         for s_orig in self.all_station_ids:
             if s_orig not in self.original_sub_ops:
                 idx = self.all_station_ids.index(s_orig) + 1
@@ -208,11 +216,8 @@ class OptimizationEngine:
                          else (0.8 if t_type == "MASTER" else 1.2))
             ops_split = info.get("ops_split") or []
             split_map = {n: (t, who, note) for (n, t, who, note) in ops_split} if ops_split else {}
-
-            # Güncel oplar (Stage 4 sonrası bu istasyondaki gerçek işler)
             current_ops = self.final_stations[s]["sub_ops"]
 
-            # İstasyon süresi: her işçinin yükü → max al
             station_worker_loads = {}
             for (op_n, op_std) in current_ops:
                 if op_n in split_map:
@@ -222,7 +227,6 @@ class OptimizationEngine:
                 station_worker_loads[who] = station_worker_loads.get(who, 0.0) + t
             istasyon_suresi = max(station_worker_loads.values()) if station_worker_loads else 0.0
 
-            # Tag
             is_fixed = s in fixed_stations
             if is_fixed:             tag = "SABIT"
             elif t_type == "POOL":   tag = "TAKVIYE (YEDEK)"
@@ -236,7 +240,6 @@ class OptimizationEngine:
             results_flat.append((idx, f"{s} (İstasyon Yükü)", "---",
                                   f"{istasyon_suresi:.2f}", "-", "-", tag, "-", "-", ""))
 
-            # Op satırları — sadece bu istasyondaki GERÇEK oplar
             for (op_n, op_std) in current_ops:
                 if op_n in split_map:
                     t_val, w_val, note_val = split_map[op_n]
@@ -266,24 +269,23 @@ class OptimizationEngine:
                 results_flat.append(("", "", op_n, f"{t_val:.2f}",
                                      durum, w_val, row_tag, op_yontem, op_detay, ""))
 
-        count_normal = sum(1 for info in self.all_assignments.values() if info.get("type") == "NORMAL")
-        count_pool = sum(1 for info in self.all_assignments.values() if info.get("type") == "POOL")
-        count_master = sum(1 for info in self.all_assignments.values() if info.get("type") == "MASTER")
+        count_normal  = sum(1 for info in self.all_assignments.values() if info.get("type") == "NORMAL")
+        count_pool    = sum(1 for info in self.all_assignments.values() if info.get("type") == "POOL")
+        count_master  = sum(1 for info in self.all_assignments.values() if info.get("type") == "MASTER")
         count_helpers = sum(1 for info in self.all_assignments.values() if info.get("helper"))
 
-        # 🚨 EKSİKTİ, GERİ EKLENDİ 🚨: **getattr(self, "stage4_stats", {})
         stats = {
-            "bottleneck_time": max_c, 
-            "total_production_hours": hrs, 
-            "active_stations": len(self.all_assignments), 
-            "assigned_count": len(worker_loads), 
-            "solve_duration": time.time() - self.start_time, 
-            "target_qty": self.target_qty, 
-            "count_normal": count_normal, 
-            "count_master": count_master, 
-            "count_pool": count_pool, 
+            "bottleneck_time": max_c,
+            "total_production_hours": hrs,
+            "active_stations": len(self.all_assignments),
+            "assigned_count": len(worker_loads),
+            "solve_duration": time.time() - self.start_time,
+            "target_qty": self.target_qty,
+            "count_normal": count_normal,
+            "count_master": count_master,
+            "count_pool": count_pool,
             "count_helpers": count_helpers,
-            **getattr(self, "stage4_stats", {}) 
+            **getattr(self, "stage4_stats", {})
         }
         return results_flat, stats
 
@@ -303,6 +305,7 @@ class OptimizationEngine:
         remaining_pool, remaining_masters = stage2.run(self, pool)
         self.print_stage_summary("STAGE 2")
         
+        remaining_masters = [m for m in remaining_masters if m in self.active_workers]
         stage3.run(self, remaining_pool, remaining_masters)
 
         # 🚨 EKSİKTİ, GERİ EKLENDİ 🚨: Stage 3 sonu Darboğaz hesaplaması (Stage 4'ün çalışması için şart)
@@ -324,21 +327,6 @@ class OptimizationEngine:
         self.stage3_bottleneck = max(s3_times) if s3_times else 0.0
         self.stage3_mean = sum(s3_times) / len(s3_times) if s3_times else 0.0
 
-        # Stage 4 çalışmadan önce stage3'ün GERÇEK durumunu kaydet.
-        # generate_final_report() sub_ops'ı kullandığı için stage4 bunları
-        # değiştirmeden önce snapshot almak şart.
-        import copy
-        _saved_sub_ops    = {s: list(data["sub_ops"]) for s, data in self.final_stations.items()}
-        _saved_assignments = copy.deepcopy(self.all_assignments)
-        _saved_moved_ops  = copy.copy(getattr(self, "moved_ops", set()))
-
-        # Geçici olarak moved_ops'u boşalt (stage3 raporunda TRANSFER etiketi çıkmasın)
-        self.moved_ops = set()
-        self.stage_summaries["stage3_before_s4"] = self.generate_final_report()[0]
-
-        # Orijinal durumu geri yükle
-        self.moved_ops = _saved_moved_ops
-
         stage4.run(self)  # MILP: Varyans minimizasyonu
         
         # Sonuçları senin harika raporlayıcın ile çıkartıyoruz
@@ -350,35 +338,22 @@ class OptimizationEngine:
         return results, stats, stage_summaries
 
     def print_stage_summary(self, stage_name):
+        # Hafızayı kontrol et ve başlat
         if not hasattr(self, "stage_summaries"):
             self.stage_summaries = {}
-
+        
+        # Backend isimlerini (STAGE 1) React'in beklediği isimlere (stage1) çevir
         mapping = {
             "STAGE 1": "stage1",
             "STAGE 2": "stage2",
             "STAGE 3": "stage3",
-            "STAGE 4": "stage4",
-            "FINAL":   "clean"
+            "STAGE 4": "stage4"
         }
         key = mapping.get(stage_name, stage_name)
-
-        results_flat, stats = self.generate_final_report()
+        
+        # O anki atama tablosunun bir kopyasını al ve hafızaya at
+        results_flat, _ = self.generate_final_report()
         self.stage_summaries[key] = results_flat
-
-        # JSON dosyasına yaz
-        output_data = {
-            "stage": key,
-            "status": "success",
-            "stats": stats,
-            "results_flat": results_flat
-        }
-        file_path = os.path.join(self.output_dir, f"{key}_data.json")
-        try:
-            with open(file_path, "w", encoding="utf-8") as f:
-                json.dump(output_data, f, ensure_ascii=False, indent=4)
-            self.log(f"[{stage_name}] Sonuçlar kaydedildi -> {key}_data.json")
-        except Exception as e:
-            self.log(f"[HATA] {stage_name} json yazılamadı: {e}")
 
     def export_json(self, p): pass
     def get_iterations(self, r): return 0
