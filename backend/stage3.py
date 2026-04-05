@@ -78,7 +78,7 @@ def run(engine, remaining_pool, remaining_masters):
             zaten_atananlar.add(info["helper"])
  
     guvenli_pool    = [w for w in remaining_pool    if w not in zaten_atananlar]
-    guvenli_masters = [m for m in remaining_masters if m not in zaten_atananlar and m not in guvenli_pool]
+    guvenli_masters = []  # Sadece pool operatorler kullaniliyor
  
     helpers_list = guvenli_pool + guvenli_masters
     N = len(helpers_list)
@@ -102,11 +102,11 @@ def run(engine, remaining_pool, remaining_masters):
     for h in helpers_list:
         for s in target_stations:
             if h in guvenli_pool and h in engine.final_stations[s]["adaylar"]:
-                cost_matrix[(h, s)] = 10   # Öncelik 1: Yetenekli havuz işçisi
+                cost_matrix[(h, s)] = 100   # Öncelik 1: Yetenekli havuz işçisi
             elif h in guvenli_masters:
-                cost_matrix[(h, s)] = 50   # Öncelik 2: Master
+                cost_matrix[(h, s)] = 1   # Öncelik 2: Master
             else:
-                cost_matrix[(h, s)] = 100  # Öncelik 3: Yeteneksiz
+                cost_matrix[(h, s)] = 50  # Öncelik 3: Yeteneksiz
  
     m_assign = pyo.ConcreteModel()
     m_assign.H = pyo.Set(initialize=helpers_list)
@@ -177,6 +177,36 @@ def run(engine, remaining_pool, remaining_masters):
             engine.log(f"{atama_sirasi}. [MECBURİ]  {selected_helper:<12} -> {s:<8} | {status_msg:<30} | (Değişim Yok)")
  
         atama_sirasi += 1
- 
+
+    # --- YENİ EKLENEN KISIM: STAGE 3 SONU TOPLAM MAD HESAPLAMASI ---
+    worker_loads = {}
+    for s, info in engine.all_assignments.items():
+        if s not in engine.final_stations: continue
+        ops_split = info.get("ops_split", None)
+        
+        if ops_split:
+            for (_, op_time, who, _) in ops_split:
+                worker_loads[who] = worker_loads.get(who, 0.0) + op_time
+        else:
+            w = info["worker"]
+            t_type = info.get("type", "NORMAL")
+            spd = engine.active_workers.get(w, 1.0) if t_type == "NORMAL" else (0.8 if t_type == "MASTER" else 1.2)
+            load = sum(op_std * spd for _, op_std in engine.final_stations[s]["sub_ops"])
+            worker_loads[w] = worker_loads.get(w, 0.0) + load
+
+    load_values = list(worker_loads.values())
+    if load_values:
+        mean_load = sum(load_values) / len(load_values)
+        # İŞTE BURASI: Hattaki herkesin ortalamadan sapmalarının TOPLAMI
+        total_mad = sum(abs(v - mean_load) for v in load_values)  
+        max_load = max(load_values)
+        
+        engine.log("-" * 60)
+        engine.log("STAGE 3 SONU METRİKLERİ:")
+        engine.log(f"  => Darboğaz (Max Süre): {max_load:.2f} sn")
+        engine.log(f"  => Ortalama Yük (Mean): {mean_load:.2f} sn")
+        engine.log(f"  => TOPLAM SAPMA (Total MAD): {total_mad:.4f} sn")
+    # --------------------------------------------------------
+
     engine.log(f"\n[BİLGİ] STAGE 3 TAMAMLANDI.")
     engine.print_stage_summary("STAGE 3")
