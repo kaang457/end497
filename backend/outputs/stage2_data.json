@@ -6,19 +6,12 @@
         "total_production_hours": 2.9040277777777774,
         "active_stations": 73,
         "assigned_count": 73,
-        "solve_duration": 0.5411591529846191,
+        "solve_duration": 0.461484432220459,
         "target_qty": 400,
-        "count_normal": 72,
+        "count_normal": 71,
         "count_master": 0,
-        "count_pool": 1,
-        "count_helpers": 0,
-        "init_mad": 157.19789952253885,
-        "final_mad": 116.24738131403578,
-        "mad_reduction_pct": 26.05029604904589,
-        "init_bottleneck": 15.823429141999222,
-        "final_bottleneck": 15.823429141999222,
-        "bottleneck_improvement": 0.0,
-        "total_improvements": 81
+        "count_pool": 2,
+        "count_helpers": 0
     },
     "results_flat": [
         [
@@ -154,7 +147,7 @@
             ""
         ],
         [
-            78,
+            79,
             "İKYB2",
             "DEVRE DIŞI",
             "0.00",
@@ -166,7 +159,7 @@
             ""
         ],
         [
-            79,
+            80,
             "İKYB3",
             "DEVRE DIŞI",
             "0.00",
@@ -178,7 +171,7 @@
             ""
         ],
         [
-            81,
+            82,
             "SMYB",
             "DEVRE DIŞI",
             "0.00",
@@ -190,7 +183,7 @@
             ""
         ],
         [
-            82,
+            83,
             "SMHYB",
             "DEVRE DIŞI",
             "0.00",
@@ -202,7 +195,7 @@
             ""
         ],
         [
-            83,
+            84,
             "OP_A020210",
             "DEVRE DIŞI",
             "0.00",
@@ -214,7 +207,7 @@
             ""
         ],
         [
-            84,
+            85,
             "OP_A020100",
             "DEVRE DIŞI",
             "0.00",
@@ -226,7 +219,7 @@
             ""
         ],
         [
-            85,
+            86,
             "OP_A022490_A",
             "DEVRE DIŞI",
             "0.00",
@@ -238,7 +231,7 @@
             ""
         ],
         [
-            86,
+            87,
             "OP_A021020_A",
             "DEVRE DIŞI",
             "0.00",
@@ -250,7 +243,7 @@
             ""
         ],
         [
-            87,
+            88,
             "OP_A021130",
             "DEVRE DIŞI",
             "0.00",
@@ -262,7 +255,7 @@
             ""
         ],
         [
-            88,
+            89,
             "AÖYB1",
             "DEVRE DIŞI",
             "0.00",
@@ -274,7 +267,7 @@
             ""
         ],
         [
-            89,
+            90,
             "AÖYB2",
             "DEVRE DIŞI",
             "0.00",
@@ -286,7 +279,7 @@
             ""
         ],
         [
-            90,
+            91,
             "AAYB1",
             "DEVRE DIŞI",
             "0.00",
@@ -298,7 +291,7 @@
             ""
         ],
         [
-            91,
+            92,
             "AAYB2",
             "DEVRE DIŞI",
             "0.00",
@@ -334,10 +327,10 @@
             ""
         ],
         [
-            1,
+            2,
             "OP_A020060 (İstasyon Yükü)",
             "---",
-            "10.69",
+            "11.94",
             "-",
             "-",
             "ATANDI",
@@ -349,9 +342,9 @@
             "",
             "",
             "OP_A020060_1",
-            "5.35",
+            "5.97",
             "STANDART",
-            "OPRT3",
+            "OPRT15",
             "DETAY",
             "Yetkinlik Odaklı Temel Atama",
             "Personel, sahip olduğu operasyon yetkinliği doğrultusunda istasyona ana operatör olarak atanmıştır.",
@@ -361,19 +354,19 @@
             "",
             "",
             "OP_A020060_2",
-            "5.35",
+            "5.97",
             "STANDART",
-            "OPRT3",
+            "OPRT15",
             "DETAY",
             "Yetkinlik Odaklı Temel Atama",
             "Personel, sahip olduğu operasyon yetkinliği doğrultusunda istasyona ana operatör olarak atanmıştır.",
             ""
         ],
         [
-            2,
+            3,
             "OP_A020080 (İstasyon Yükü)",
             "---",
-            "11.94",
+            "11.83",
             "-",
             "-",
             "SABIT",
@@ -385,9 +378,9 @@
             "",
             "",
             "OP_A020080_1",
-            "5.67",
+            "5.63",
             "STANDART",
-            "OPRT15",
+            "OPRT4",
             "DETAY",
             "Yetkinlik Odaklı Temel Atama",
             "Personel, sahip olduğu operasyon yetkinliği doğrultusunda istasyona ana operatör olarak atanmıştır.",
@@ -397,19 +390,19 @@
             "",
             "",
             "OP_A020080_2",
-            "6.26",
+            "6.21",
             "STANDART",
-            "OPRT15",
+            "OPRT4",
             "DETAY",
             "Yetkinlik Odaklı Temel Atama",
             "Personel, sahip olduğu operasyon yetkinliği doğrultusunda istasyona ana operatör olarak atanmıştır.",
             ""
         ],
         [
-            3,
+            4,
             "OP_A020080_A (İstasyon Yükü)",
             "---",
-            "7.18",
+            "6.49",
             "-",
             "-",
             "SABIT",
@@ -421,9 +414,9 @@
             "",
             "",
             "OP_A020080_A_2",
-            "6.21",
+            "5.61",
             "STANDART",
-            "OPRT4",
+            "OPRT3",
             "DETAY",
             "Yetkinlik Odaklı Temel Atama",
             "Personel, sahip olduğu operasyon yetkinliği doğrultusunda istasyona ana operatör olarak atanmıştır.",
@@ -433,16 +426,16 @@
             "",
             "",
             "OP_A020080_A_3",
-            "0.97",
+            "0.88",
             "STANDART",
-            "OPRT4",
+            "OPRT3",
             "DETAY",
             "Yetkinlik Odaklı Temel Atama",
             "Personel, sahip olduğu operasyon yetkinliği doğrultusunda istasyona ana operatör olarak atanmıştır.",
             ""
         ],
         [
-            4,
+            5,
             "OP_A020140 (İstasyon Yükü)",
             "---",
             "12.60",
@@ -478,7 +471,7 @@
             ""
         ],
         [
-            5,
+            6,
             "OP_A020160 (İstasyon Yükü)",
             "---",
             "10.36",
@@ -526,7 +519,7 @@
             ""
         ],
         [
-            6,
+            9,
             "OP_A020220 (İstasyon Yükü)",
             "---",
             "12.69",
@@ -574,7 +567,7 @@
             ""
         ],
         [
-            7,
+            8,
             "OP_A020190_A (İstasyon Yükü)",
             "---",
             "3.94",
@@ -598,7 +591,7 @@
             ""
         ],
         [
-            8,
+            10,
             "OP_A020300 (İstasyon Yükü)",
             "---",
             "16.04",
@@ -658,44 +651,8 @@
             ""
         ],
         [
-            9,
+            11,
             "OP_A020330 (İstasyon Yükü)",
-            "---",
-            "18.77",
-            "-",
-            "-",
-            "SABIT",
-            "-",
-            "-",
-            ""
-        ],
-        [
-            "",
-            "",
-            "OP_A020330_1",
-            "9.39",
-            "STANDART",
-            "OPRT53",
-            "DETAY",
-            "Yetkinlik Odaklı Temel Atama",
-            "Personel, sahip olduğu operasyon yetkinliği doğrultusunda istasyona ana operatör olarak atanmıştır.",
-            ""
-        ],
-        [
-            "",
-            "",
-            "OP_A020330_2",
-            "9.39",
-            "STANDART",
-            "OPRT53",
-            "DETAY",
-            "Yetkinlik Odaklı Temel Atama",
-            "Personel, sahip olduğu operasyon yetkinliği doğrultusunda istasyona ana operatör olarak atanmıştır.",
-            ""
-        ],
-        [
-            10,
-            "OP_A020330_A (İstasyon Yükü)",
             "---",
             "17.52",
             "-",
@@ -708,10 +665,46 @@
         [
             "",
             "",
-            "OP_A020330_A_1",
+            "OP_A020330_1",
             "8.76",
             "STANDART",
             "OPRT52",
+            "DETAY",
+            "Yetkinlik Odaklı Temel Atama",
+            "Personel, sahip olduğu operasyon yetkinliği doğrultusunda istasyona ana operatör olarak atanmıştır.",
+            ""
+        ],
+        [
+            "",
+            "",
+            "OP_A020330_2",
+            "8.76",
+            "STANDART",
+            "OPRT52",
+            "DETAY",
+            "Yetkinlik Odaklı Temel Atama",
+            "Personel, sahip olduğu operasyon yetkinliği doğrultusunda istasyona ana operatör olarak atanmıştır.",
+            ""
+        ],
+        [
+            12,
+            "OP_A020330_A (İstasyon Yükü)",
+            "---",
+            "18.77",
+            "-",
+            "-",
+            "SABIT",
+            "-",
+            "-",
+            ""
+        ],
+        [
+            "",
+            "",
+            "OP_A020330_A_1",
+            "9.39",
+            "STANDART",
+            "OPRT53",
             "DETAY",
             "Yetkinlik Odaklı Temel Atama",
             "Personel, sahip olduğu operasyon yetkinliği doğrultusunda istasyona ana operatör olarak atanmıştır.",
@@ -721,16 +714,16 @@
             "",
             "",
             "OP_A020330_A_2",
-            "8.76",
+            "9.39",
             "STANDART",
-            "OPRT52",
+            "OPRT53",
             "DETAY",
             "Yetkinlik Odaklı Temel Atama",
             "Personel, sahip olduğu operasyon yetkinliği doğrultusunda istasyona ana operatör olarak atanmıştır.",
             ""
         ],
         [
-            11,
+            13,
             "OP_A020350 (İstasyon Yükü)",
             "---",
             "15.82",
@@ -790,7 +783,7 @@
             ""
         ],
         [
-            12,
+            15,
             "OP_A020390 (İstasyon Yükü)",
             "---",
             "16.27",
@@ -838,7 +831,7 @@
             ""
         ],
         [
-            13,
+            16,
             "OP_A020420 (İstasyon Yükü)",
             "---",
             "10.76",
@@ -862,7 +855,7 @@
             ""
         ],
         [
-            14,
+            17,
             "OP_A020450 (İstasyon Yükü)",
             "---",
             "9.27",
@@ -898,7 +891,7 @@
             ""
         ],
         [
-            15,
+            18,
             "OP_A020480 (İstasyon Yükü)",
             "---",
             "11.44",
@@ -946,7 +939,7 @@
             ""
         ],
         [
-            16,
+            19,
             "OP_A020500 (İstasyon Yükü)",
             "---",
             "16.68",
@@ -994,7 +987,7 @@
             ""
         ],
         [
-            17,
+            20,
             "OP_A020530 (İstasyon Yükü)",
             "---",
             "6.04",
@@ -1030,7 +1023,7 @@
             ""
         ],
         [
-            18,
+            21,
             "OP_A020570 (İstasyon Yükü)",
             "---",
             "7.01",
@@ -1078,7 +1071,7 @@
             ""
         ],
         [
-            19,
+            22,
             "OP_A020590 (İstasyon Yükü)",
             "---",
             "10.13",
@@ -1114,7 +1107,7 @@
             ""
         ],
         [
-            20,
+            23,
             "OP_A020610 (İstasyon Yükü)",
             "---",
             "12.71",
@@ -1174,7 +1167,7 @@
             ""
         ],
         [
-            21,
+            24,
             "OP_A020630 (İstasyon Yükü)",
             "---",
             "19.91",
@@ -1258,7 +1251,7 @@
             ""
         ],
         [
-            22,
+            25,
             "OP_A020650 (İstasyon Yükü)",
             "---",
             "11.60",
@@ -1294,7 +1287,7 @@
             ""
         ],
         [
-            23,
+            26,
             "OP_A020690 (İstasyon Yükü)",
             "---",
             "10.43",
@@ -1330,7 +1323,7 @@
             ""
         ],
         [
-            24,
+            27,
             "OP_A020710 (İstasyon Yükü)",
             "---",
             "19.02",
@@ -1402,7 +1395,7 @@
             ""
         ],
         [
-            25,
+            28,
             "OP_A020770 (İstasyon Yükü)",
             "---",
             "15.07",
@@ -1462,7 +1455,7 @@
             ""
         ],
         [
-            26,
+            29,
             "OP_A020820 (İstasyon Yükü)",
             "---",
             "11.78",
@@ -1510,7 +1503,7 @@
             ""
         ],
         [
-            27,
+            32,
             "OP_A020840 (İstasyon Yükü)",
             "---",
             "12.20",
@@ -1570,7 +1563,7 @@
             ""
         ],
         [
-            28,
+            33,
             "OP_A020860 (İstasyon Yükü)",
             "---",
             "10.16",
@@ -1618,7 +1611,7 @@
             ""
         ],
         [
-            29,
+            34,
             "OP_A020880 (İstasyon Yükü)",
             "---",
             "11.19",
@@ -1678,7 +1671,7 @@
             ""
         ],
         [
-            30,
+            35,
             "OP_A020900 (İstasyon Yükü)",
             "---",
             "17.24",
@@ -1714,7 +1707,7 @@
             ""
         ],
         [
-            31,
+            36,
             "OP_A020920 (İstasyon Yükü)",
             "---",
             "14.03",
@@ -1774,7 +1767,7 @@
             ""
         ],
         [
-            32,
+            37,
             "OP_A020960 (İstasyon Yükü)",
             "---",
             "14.44",
@@ -1834,7 +1827,7 @@
             ""
         ],
         [
-            33,
+            38,
             "OP_A021030 (İstasyon Yükü)",
             "---",
             "13.00",
@@ -1894,7 +1887,7 @@
             ""
         ],
         [
-            34,
+            40,
             "OP_A021050 (İstasyon Yükü)",
             "---",
             "18.68",
@@ -1966,7 +1959,7 @@
             ""
         ],
         [
-            35,
+            39,
             "OP_A021020 (İstasyon Yükü)",
             "---",
             "11.99",
@@ -2002,13 +1995,13 @@
             ""
         ],
         [
-            36,
+            41,
             "OP_A021070 (İstasyon Yükü)",
             "---",
-            "13.24",
+            "16.32",
             "-",
             "-",
-            "ATANDI",
+            "TAKVIYE (YEDEK)",
             "-",
             "-",
             ""
@@ -2017,11 +2010,11 @@
             "",
             "",
             "OP_A021070_1",
-            "3.02",
+            "3.72",
             "STANDART",
-            "OPRT20",
+            "OPRT7",
             "DETAY",
-            "Yetkinlik Odaklı Temel Atama",
+            "Eğitim Odaklı Temel Atama",
             "Personel, sahip olduğu operasyon yetkinliği doğrultusunda istasyona ana operatör olarak atanmıştır.",
             ""
         ],
@@ -2029,11 +2022,11 @@
             "",
             "",
             "OP_A021070_2",
-            "4.77",
+            "5.88",
             "STANDART",
-            "OPRT20",
+            "OPRT7",
             "DETAY",
-            "Yetkinlik Odaklı Temel Atama",
+            "Eğitim Odaklı Temel Atama",
             "Personel, sahip olduğu operasyon yetkinliği doğrultusunda istasyona ana operatör olarak atanmıştır.",
             ""
         ],
@@ -2041,16 +2034,16 @@
             "",
             "",
             "OP_A021070_5",
-            "5.45",
+            "6.72",
             "STANDART",
-            "OPRT20",
+            "OPRT7",
             "DETAY",
-            "Yetkinlik Odaklı Temel Atama",
+            "Eğitim Odaklı Temel Atama",
             "Personel, sahip olduğu operasyon yetkinliği doğrultusunda istasyona ana operatör olarak atanmıştır.",
             ""
         ],
         [
-            37,
+            42,
             "OP_A021070_A (İstasyon Yükü)",
             "---",
             "10.43",
@@ -2098,7 +2091,7 @@
             ""
         ],
         [
-            38,
+            43,
             "OP_A021110 (İstasyon Yükü)",
             "---",
             "17.67",
@@ -2170,7 +2163,7 @@
             ""
         ],
         [
-            39,
+            44,
             "ÜSYB (İstasyon Yükü)",
             "---",
             "18.30",
@@ -2230,7 +2223,7 @@
             ""
         ],
         [
-            40,
+            45,
             "OP_A021140 (İstasyon Yükü)",
             "---",
             "17.12",
@@ -2302,7 +2295,7 @@
             ""
         ],
         [
-            41,
+            46,
             "DKGYB (İstasyon Yükü)",
             "---",
             "11.41",
@@ -2362,10 +2355,10 @@
             ""
         ],
         [
-            42,
+            48,
             "OP_A021170 (İstasyon Yükü)",
             "---",
-            "12.98",
+            "12.75",
             "-",
             "-",
             "ATANDI",
@@ -2377,9 +2370,9 @@
             "",
             "",
             "OP_A021170_1",
-            "0.50",
+            "0.49",
             "STANDART",
-            "OPRT2",
+            "OPRT20",
             "DETAY",
             "Yetkinlik Odaklı Temel Atama",
             "Personel, sahip olduğu operasyon yetkinliği doğrultusunda istasyona ana operatör olarak atanmıştır.",
@@ -2389,9 +2382,9 @@
             "",
             "",
             "OP_A021170_2",
-            "2.77",
+            "2.73",
             "STANDART",
-            "OPRT2",
+            "OPRT20",
             "DETAY",
             "Yetkinlik Odaklı Temel Atama",
             "Personel, sahip olduğu operasyon yetkinliği doğrultusunda istasyona ana operatör olarak atanmıştır.",
@@ -2401,9 +2394,9 @@
             "",
             "",
             "OP_A021170_3",
-            "5.45",
+            "5.35",
             "STANDART",
-            "OPRT2",
+            "OPRT20",
             "DETAY",
             "Yetkinlik Odaklı Temel Atama",
             "Personel, sahip olduğu operasyon yetkinliği doğrultusunda istasyona ana operatör olarak atanmıştır.",
@@ -2413,9 +2406,9 @@
             "",
             "",
             "OP_A021170_4",
-            "3.76",
+            "3.70",
             "STANDART",
-            "OPRT2",
+            "OPRT20",
             "DETAY",
             "Yetkinlik Odaklı Temel Atama",
             "Personel, sahip olduğu operasyon yetkinliği doğrultusunda istasyona ana operatör olarak atanmıştır.",
@@ -2425,16 +2418,16 @@
             "",
             "",
             "OP_A021170_5",
-            "0.50",
+            "0.49",
             "STANDART",
-            "OPRT2",
+            "OPRT20",
             "DETAY",
             "Yetkinlik Odaklı Temel Atama",
             "Personel, sahip olduğu operasyon yetkinliği doğrultusunda istasyona ana operatör olarak atanmıştır.",
             ""
         ],
         [
-            43,
+            49,
             "OP_A021190 (İstasyon Yükü)",
             "---",
             "7.83",
@@ -2482,7 +2475,7 @@
             ""
         ],
         [
-            44,
+            50,
             "OP_A021210 (İstasyon Yükü)",
             "---",
             "18.95",
@@ -2542,7 +2535,7 @@
             ""
         ],
         [
-            45,
+            51,
             "OP_A021230 (İstasyon Yükü)",
             "---",
             "11.41",
@@ -2602,7 +2595,7 @@
             ""
         ],
         [
-            46,
+            52,
             "OP_A021250 (İstasyon Yükü)",
             "---",
             "10.56",
@@ -2674,7 +2667,7 @@
             ""
         ],
         [
-            47,
+            54,
             "OP_A022120 (İstasyon Yükü)",
             "---",
             "11.82",
@@ -2722,7 +2715,7 @@
             ""
         ],
         [
-            48,
+            56,
             "OP_A022180 (İstasyon Yükü)",
             "---",
             "16.46",
@@ -2782,7 +2775,7 @@
             ""
         ],
         [
-            49,
+            57,
             "OP_A022210 (İstasyon Yükü)",
             "---",
             "16.86",
@@ -2842,7 +2835,7 @@
             ""
         ],
         [
-            50,
+            59,
             "OP_A022240 (İstasyon Yükü)",
             "---",
             "13.80",
@@ -2890,7 +2883,7 @@
             ""
         ],
         [
-            51,
+            60,
             "OP_A022230 (İstasyon Yükü)",
             "---",
             "13.02",
@@ -2938,7 +2931,7 @@
             ""
         ],
         [
-            52,
+            61,
             "OP_A022270 (İstasyon Yükü)",
             "---",
             "10.51",
@@ -2986,7 +2979,7 @@
             ""
         ],
         [
-            53,
+            62,
             "OP_A022270_A (İstasyon Yükü)",
             "---",
             "17.35",
@@ -3058,7 +3051,7 @@
             ""
         ],
         [
-            54,
+            63,
             "OP_A022290 (İstasyon Yükü)",
             "---",
             "15.57",
@@ -3118,7 +3111,7 @@
             ""
         ],
         [
-            55,
+            64,
             "OP_A022320 (İstasyon Yükü)",
             "---",
             "10.85",
@@ -3202,7 +3195,7 @@
             ""
         ],
         [
-            56,
+            65,
             "OP_A022370 (İstasyon Yükü)",
             "---",
             "15.51",
@@ -3274,7 +3267,7 @@
             ""
         ],
         [
-            57,
+            66,
             "ASYB (İstasyon Yükü)",
             "---",
             "12.50",
@@ -3358,7 +3351,7 @@
             ""
         ],
         [
-            58,
+            67,
             "OP_A022390 (İstasyon Yükü)",
             "---",
             "19.67",
@@ -3442,7 +3435,7 @@
             ""
         ],
         [
-            59,
+            68,
             "OP_A022420 (İstasyon Yükü)",
             "---",
             "12.10",
@@ -3490,7 +3483,7 @@
             ""
         ],
         [
-            60,
+            69,
             "OP_A022440 (İstasyon Yükü)",
             "---",
             "11.95",
@@ -3550,7 +3543,7 @@
             ""
         ],
         [
-            61,
+            71,
             "OP_A022490 (İstasyon Yükü)",
             "---",
             "8.97",
@@ -3598,7 +3591,7 @@
             ""
         ],
         [
-            62,
+            73,
             "OP_A022540 (İstasyon Yükü)",
             "---",
             "18.16",
@@ -3706,7 +3699,7 @@
             ""
         ],
         [
-            63,
+            74,
             "OP_A022700 (İstasyon Yükü)",
             "---",
             "7.08",
@@ -3766,7 +3759,7 @@
             ""
         ],
         [
-            64,
+            75,
             "OP_A022740 (İstasyon Yükü)",
             "---",
             "18.21",
@@ -3874,7 +3867,7 @@
             ""
         ],
         [
-            65,
+            76,
             "OP_A022760 (İstasyon Yükü)",
             "---",
             "13.50",
@@ -3922,7 +3915,7 @@
             ""
         ],
         [
-            66,
+            77,
             "DKYB (İstasyon Yükü)",
             "---",
             "25.68",
@@ -3939,7 +3932,7 @@
             "DKYB_1",
             "4.68",
             "STANDART",
-            "OPRT7",
+            "OPRT8",
             "DETAY",
             "Eğitim Odaklı Temel Atama",
             "Personel, sahip olduğu operasyon yetkinliği doğrultusunda istasyona ana operatör olarak atanmıştır.",
@@ -3951,7 +3944,7 @@
             "DKYB_2",
             "1.44",
             "STANDART",
-            "OPRT7",
+            "OPRT8",
             "DETAY",
             "Eğitim Odaklı Temel Atama",
             "Personel, sahip olduğu operasyon yetkinliği doğrultusunda istasyona ana operatör olarak atanmıştır.",
@@ -3963,7 +3956,7 @@
             "DKYB_3",
             "5.88",
             "STANDART",
-            "OPRT7",
+            "OPRT8",
             "DETAY",
             "Eğitim Odaklı Temel Atama",
             "Personel, sahip olduğu operasyon yetkinliği doğrultusunda istasyona ana operatör olarak atanmıştır.",
@@ -3975,7 +3968,7 @@
             "DKYB_4",
             "3.36",
             "STANDART",
-            "OPRT7",
+            "OPRT8",
             "DETAY",
             "Eğitim Odaklı Temel Atama",
             "Personel, sahip olduğu operasyon yetkinliği doğrultusunda istasyona ana operatör olarak atanmıştır.",
@@ -3987,7 +3980,7 @@
             "DKYB_5",
             "3.72",
             "STANDART",
-            "OPRT7",
+            "OPRT8",
             "DETAY",
             "Eğitim Odaklı Temel Atama",
             "Personel, sahip olduğu operasyon yetkinliği doğrultusunda istasyona ana operatör olarak atanmıştır.",
@@ -3999,7 +3992,7 @@
             "DKYB_7",
             "5.40",
             "STANDART",
-            "OPRT7",
+            "OPRT8",
             "DETAY",
             "Eğitim Odaklı Temel Atama",
             "Personel, sahip olduğu operasyon yetkinliği doğrultusunda istasyona ana operatör olarak atanmıştır.",
@@ -4011,14 +4004,14 @@
             "DKYB_6",
             "1.20",
             "STANDART",
-            "OPRT7",
+            "OPRT8",
             "DETAY",
             "Eğitim Odaklı Temel Atama",
             "Personel, sahip olduğu operasyon yetkinliği doğrultusunda istasyona ana operatör olarak atanmıştır.",
             ""
         ],
         [
-            67,
+            78,
             "İKYB (İstasyon Yükü)",
             "---",
             "16.55",
@@ -4066,7 +4059,7 @@
             ""
         ],
         [
-            68,
+            81,
             "İKYB4 (İstasyon Yükü)",
             "---",
             "17.30",
@@ -4150,7 +4143,7 @@
             ""
         ],
         [
-            69,
+            93,
             "PYB1 (İstasyon Yükü)",
             "---",
             "10.29",
@@ -4198,7 +4191,7 @@
             ""
         ],
         [
-            70,
+            95,
             "PYB2 (İstasyon Yükü)",
             "---",
             "9.82",
@@ -4246,7 +4239,7 @@
             ""
         ],
         [
-            71,
+            94,
             "PYB3 (İstasyon Yükü)",
             "---",
             "11.45",
@@ -4306,7 +4299,7 @@
             ""
         ],
         [
-            72,
+            96,
             "FG1 (İstasyon Yükü)",
             "---",
             "9.06",
@@ -4330,7 +4323,7 @@
             ""
         ],
         [
-            73,
+            97,
             "FG2 (İstasyon Yükü)",
             "---",
             "9.46",

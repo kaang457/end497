@@ -200,7 +200,8 @@ class OptimizationEngine:
                 idx = self.all_station_ids.index(s_orig) + 1
                 results_flat.append((idx, f"{s_orig} (İstasyon Yükü)", "ATANMADI", "0.00", "BOŞ", "-", "BEKLEMEDE", "-", "-", ""))
 
-        for idx, s in enumerate(sorted_stations, 1):
+        for s in sorted_stations:
+            idx = self.all_station_ids.index(s) + 1 if s in self.all_station_ids else 999
             info      = self.all_assignments[s]
             main_w    = info["worker"]
             t_type    = info.get("type", "NORMAL")

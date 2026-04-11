@@ -30,7 +30,7 @@ export default function DashboardScreen() {
   const [workerSearch, setWorkerSearch] = useState("");
 
   const [showSkuPicker, setShowSkuPicker] = useState(false);
-  const mevcutSKUlar = ["78446", "10234", "55690", "88001"]; 
+  const mevcutSKUlar = ["97653", "78446", "40132", "77558", "77514", "78472"]; 
 
   useEffect(() => {
     fetch("http://localhost:8000/api/personel-listesi")

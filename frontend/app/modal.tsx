@@ -91,7 +91,7 @@ export default function StationDetailModal({ visible, onClose, stationData, acti
               );
             })}
             {(!stationData.rows || stationData.rows.length === 0) && (
-               <Text style={{color: '#8b949e', textAlign: 'center', padding: 20}}>Bu istasyonda operasyon bulunmamaktadır.</Text>
+               <Text style={{color: '#8b949e', textAlign: 'center', padding: 20}}>Bu istasyon girilen SKU için kullanılmamaktadır.</Text>
             )}
           </ScrollView>
         </View>
