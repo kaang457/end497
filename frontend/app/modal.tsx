@@ -3,7 +3,7 @@ import { Modal, View, Text, TouchableOpacity, ScrollView, StyleSheet, SafeAreaVi
 
 const IKON_STILLERI: any = {
   "🧩": { bg: "rgba(59, 130, 246, 0.15)", border: "#3b82f6", text: "#93c5fd" },
-  "🎓": { bg: "rgba(16, 185, 129, 0.15)", border: "#10b981", text: "#6ee7b7" },
+  "🎓": { bg: "rgba(6, 182, 212, 0.15)", border: "#06b6d4", text: "#67e8f9" },
   "⚡": { bg: "rgba(239, 68, 68, 0.15)", border: "#ef4444", text: "#fca5a5" },
   "⚖️": { bg: "rgba(234, 179, 8, 0.15)", border: "#eab308", text: "#fde047" },
   "⭐": { bg: "rgba(245, 158, 11, 0.15)", border: "#f59e0b", text: "#fcd34d" },

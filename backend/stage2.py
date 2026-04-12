@@ -130,7 +130,6 @@ def run(engine, pool):
                         spd = 0.8 if engine.all_assignments[n_st]["type"] == "MASTER" else 1.2
                         added_time = sum(t for _, t in engine.final_stations[s]["sub_ops"]) * spd
                         engine.all_assignments[n_st]["time"] += added_time
-
                     stations_to_delete.append(s)
                     assigned = True; break
 

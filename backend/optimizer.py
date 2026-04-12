@@ -134,6 +134,15 @@ class OptimizationEngine:
                 if seq_val != 999: recipe_data[st_id]["seq"] = seq_val
             recipe_data[st_id]["sub_ops"].append((op_name, std_time))
 
+        # === YENİ EKLENEN KISIM: RASTGELELİĞİ ÖNLEME ===
+        # Excel okuma döngüsü bitti. Python'un rastgele küme (set) sıralamasını 
+        # engellemek için tüm kümeleri A'dan Z'ye sıralı listeye çeviriyoruz.
+        for st in recipe_data:
+            recipe_data[st]["adaylar"] = sorted(list(recipe_data[st]["adaylar"]))
+        
+        self.fixed_stations = sorted(list(self.fixed_stations))
+        # ===============================================
+
         self.final_stations = recipe_data
         self.original_sub_ops = {st: list(data["sub_ops"]) for st, data in recipe_data.items()}
         self.op_to_station = {op[0]: st for st, ops in self.original_sub_ops.items() for op in ops}

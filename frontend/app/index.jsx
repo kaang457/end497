@@ -18,9 +18,9 @@ import StationDetailModal from "./modal";
 export default function DashboardScreen() {
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({ 
-    sku: "78446", 
+    sku: "SKU Seçiniz", 
     vardiya: "8", 
-    demand: "400" 
+    demand: "" 
   });
   const [planData, setPlanData] = useState(null);
 
@@ -94,6 +94,9 @@ export default function DashboardScreen() {
   const [isDragging, setIsDragging] = useState(false);
   const mapContainerRef = useRef(null);
 
+  // Web için mouse-based sürükleme (PanResponder web'de güvenilmez)
+  const dragState = useRef({ active: false, startX: 0, startY: 0, panStartX: 0, panStartY: 0 });
+
   const panResponder = useRef(
     PanResponder.create({
       onMoveShouldSetPanResponder: (evt, gestureState) => Math.abs(gestureState.dx) > 2 || Math.abs(gestureState.dy) > 2,
@@ -110,25 +113,68 @@ export default function DashboardScreen() {
   ).current;
 
   useEffect(() => {
-    if (Platform.OS === 'web') {
-      const handleGlobalWheel = (e) => {
-        if (e.ctrlKey) {
-          e.preventDefault(); 
-          const mapEl = mapContainerRef.current;
-          if (mapEl) {
-            const rect = mapEl.getBoundingClientRect();
-            const isInside = (e.clientX >= rect.left && e.clientX <= rect.right && e.clientY >= rect.top && e.clientY <= rect.bottom);
-            if (isInside) {
-              const direction = e.deltaY > 0 ? -1 : 1;
-              setScale(prev => Math.min(Math.max(0.15, prev + (direction * 0.05)), 4.0));
-            }
+    if (Platform.OS !== 'web') return;
+
+    const handleMouseDown = (e) => {
+      const mapEl = mapContainerRef.current;
+      if (!mapEl) return;
+      // Sadece harita container'ı veya içindeki Animated.View'a tıklanınca başlat
+      if (!mapEl.contains(e.target)) return;
+      e.preventDefault();
+      dragState.current = {
+        active: true,
+        startX: e.clientX,
+        startY: e.clientY,
+        panStartX: pan.x._value,
+        panStartY: pan.y._value,
+      };
+      setIsDragging(true);
+    };
+
+    const handleMouseMove = (e) => {
+      if (!dragState.current.active) return;
+      e.preventDefault();
+      const dx = e.clientX - dragState.current.startX;
+      const dy = e.clientY - dragState.current.startY;
+      pan.setValue({
+        x: dragState.current.panStartX + dx,
+        y: dragState.current.panStartY + dy,
+      });
+    };
+
+    const handleMouseUp = () => {
+      if (!dragState.current.active) return;
+      dragState.current.active = false;
+      setIsDragging(false);
+    };
+
+    const handleGlobalWheel = (e) => {
+      if (e.ctrlKey) {
+        e.preventDefault(); 
+        const mapEl = mapContainerRef.current;
+        if (mapEl) {
+          const rect = mapEl.getBoundingClientRect();
+          const isInside = (e.clientX >= rect.left && e.clientX <= rect.right && e.clientY >= rect.top && e.clientY <= rect.bottom);
+          if (isInside) {
+            const direction = e.deltaY > 0 ? -1 : 1;
+            setScale(prev => Math.min(Math.max(0.15, prev + (direction * 0.05)), 4.0));
           }
         }
-      };
-      window.addEventListener('wheel', handleGlobalWheel, { passive: false });
-      return () => window.removeEventListener('wheel', handleGlobalWheel);
-    }
-  }, []);
+      }
+    };
+
+    window.addEventListener('mousedown', handleMouseDown);
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+    window.addEventListener('wheel', handleGlobalWheel, { passive: false });
+
+    return () => {
+      window.removeEventListener('mousedown', handleMouseDown);
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+      window.removeEventListener('wheel', handleGlobalWheel);
+    };
+  }, [pan]);
 
   const resetMap = () => {
     setScale(START_SCALE);
@@ -264,7 +310,7 @@ export default function DashboardScreen() {
       if (detay.includes("TRANSFER")) return "stage4";
       if (detay.includes("YARDIMCI")) return "stage3";
       if (ikon === "⭐" || atama.includes("MASTER") || atama.includes("USTA")) return "stage2";
-      if (ikon === "🎓" || atama.includes("POOL") || atama.includes("YEDEK")) return "stage2";
+      if (ikon === "🎓" || ikon === "📚" || atama.includes("POOL") || atama.includes("YEDEK") || atama.includes("MERGE")) return "stage2";
       return "stage1";
     };
 
@@ -490,7 +536,7 @@ export default function DashboardScreen() {
           
           <View style={styles.inputGroup}>
             <Text style={styles.inputLabel}>Hedef Talep (Adet):</Text>
-            <TextInput style={styles.input} value={String(formData.demand)} onChangeText={(t) => setFormData({ ...formData, demand: t })} keyboardType="numeric" />
+            <TextInput style={styles.input} value={String(formData.demand)} onChangeText={(t) => setFormData({ ...formData, demand: t })} onFocus={() => { if (!formData.demand) return; setFormData({ ...formData, demand: "" }); }} placeholder="Hedef Adet Giriniz" placeholderTextColor="#8b949e" keyboardType="numeric" />
           </View>
 
           {/* DEVAMSIZ PERSONEL SEÇİMİ */}
@@ -640,9 +686,9 @@ export default function DashboardScreen() {
               
               {/* HARİTA ALANI */}
               {activeMenu === "atama" && (
-                <View ref={mapContainerRef} style={[styles.mapContainer, { cursor: isDragging ? 'grabbing' : 'grab' }]} {...panResponder.panHandlers}>
+                <View ref={mapContainerRef} style={[styles.mapContainer, { cursor: isDragging ? 'grabbing' : 'grab' }]} {...(Platform.OS !== 'web' ? panResponder.panHandlers : {})}>
                   <TouchableOpacity style={styles.resetBtn} onPress={resetMap}><Text style={{color: '#fff', fontSize: 10}}>📍 Merkezi Bul</Text></TouchableOpacity>
-                  <Animated.View pointerEvents={isDragging ? "none" : "box-none"} style={{ flex: 1, alignItems: 'center', justifyContent: 'center', transform: [{ translateX: pan.x }, { translateY: pan.y }, { scale: scale }] }}>
+                  <Animated.View pointerEvents="box-none" style={{ flex: 1, alignItems: 'center', justifyContent: 'center', transform: [{ translateX: pan.x }, { translateY: pan.y }, { scale: scale }] }}>
                     <View style={{ flexDirection: 'row', marginRight: 190 }}>
                       <View style={{ justifyContent: 'space-between' }}>
                         <View style={{ flexDirection: "row", gap: 5, alignSelf: "flex-end" }}>
@@ -962,10 +1008,7 @@ const StationBox = ({ st, scale, threshold, showLabel, onSelect, selectedId, act
   
   if (isGreen && activeStage !== "clean") {
     if (activeStage === "stage1" && (st.durum === "ATANDI" || st.durum === "SABIT")) { badgeIcon = "🧩"; badgeColor = "#3b82f6"; } 
-    else if (activeStage === "stage2") {
-      if (st.durum === "TAKVIYE (YEDEK)" || st.durum === "POOL") { badgeIcon = "🎓"; badgeColor = "#10b981"; } 
-      else if (st.durum === "TAKVIYE (USTA)" || st.durum === "MASTER") { badgeIcon = "⭐"; badgeColor = "#f59e0b"; }
-    } 
+    else if (activeStage === "stage2") { badgeIcon = "📚"; badgeColor = "#10b981"; } 
     else if (activeStage === "stage3" && st.rows?.some(r => r.detay?.includes("YARDIMCI DESTEĞİ"))) { badgeIcon = "⚡"; badgeColor = "#ef4444"; } 
     else if (activeStage === "stage4" && st.rows?.some(r => r.detay?.includes("TRANSFER"))) { badgeIcon = "⇄"; badgeColor = "#0ea5e9"; }
   }
