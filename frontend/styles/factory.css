@@ -1,0 +1,77 @@
+/* factory.css */
+
+/* --- SCADA & FABRİKA ZEMİNİ (BLUEPRINT) --- */
+.factory-floor {
+  background-color: #f1f5f9; /* Kırık beyaz aydınlık zemin */
+  /* Mühendislik çizim kağıdı hissiyatı */
+  background-image: 
+    linear-gradient(rgba(148, 163, 184, 0.2) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(148, 163, 184, 0.2) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+.dark-mode .factory-floor {
+  background-color: #0f172a; /* Koyu arduvaz */
+  background-image: 
+    linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+}
+
+/* --- TIKIR TIKIR AKAN KONVEYÖR BANT (ROLLER BELT) --- */
+@keyframes conveyorRight {
+  0% { background-position: 0 0; }
+  100% { background-position: 40px 0; }
+}
+
+@keyframes conveyorLeft {
+  0% { background-position: 40px 0; }
+  100% { background-position: 0 0; }
+}
+
+@keyframes conveyorDown {
+  0% { background-position: 0 0; }
+  100% { background-position: 0 40px; }
+}
+
+/* Konveyörün Ortak Metalik Alt Zemini */
+.conveyor-base {
+  background-color: #64748b; /* Orta Gri Metal */
+  /* Derinlik veren ağır endüstriyel gölgeler (Kanalın içi gibi) */
+  box-shadow: inset 0px 8px 12px rgba(0, 0, 0, 0.6), inset 0px -8px 12px rgba(0, 0, 0, 0.6);
+}
+
+.dark-mode .conveyor-base {
+  background-color: #334155; 
+  box-shadow: inset 0px 8px 15px rgba(0, 0, 0, 0.8), inset 0px -8px 15px rgba(0, 0, 0, 0.8);
+}
+
+/* Kalın Kauçuk veya Metal Rulolar (Siyah Çizgiler) */
+.conveyor-belt-h-right {
+  background-image: repeating-linear-gradient(90deg, transparent, transparent 32px, rgba(15, 23, 42, 0.9) 32px, rgba(15, 23, 42, 0.9) 40px);
+  animation: conveyorRight 1.2s linear infinite; /* Kesintisiz animasyon */
+}
+
+.conveyor-belt-h-left {
+  background-image: repeating-linear-gradient(90deg, transparent, transparent 32px, rgba(15, 23, 42, 0.9) 32px, rgba(15, 23, 42, 0.9) 40px);
+  animation: conveyorLeft 1.2s linear infinite;
+}
+
+.conveyor-belt-v-down {
+  background-image: repeating-linear-gradient(180deg, transparent, transparent 32px, rgba(15, 23, 42, 0.9) 32px, rgba(15, 23, 42, 0.9) 40px);
+  animation: conveyorDown 1.2s linear infinite;
+  box-shadow: inset 8px 0px 12px rgba(0, 0, 0, 0.6), inset -8px 0px 12px rgba(0, 0, 0, 0.6); /* Dikey gölge */
+}
+
+.dark-mode .conveyor-belt-v-down {
+  box-shadow: inset 8px 0px 15px rgba(0, 0, 0, 0.8), inset -8px 0px 15px rgba(0, 0, 0, 0.8);
+}
+
+/* --- SCADA İSTASYON IŞIKLARI (GLOW EFFECTS) --- */
+.station-indicator-active {
+  box-shadow: 0px 0px 12px 3px rgba(16, 185, 129, 0.7); /* Güçlü yeşil parlama */
+}
+
+.station-indicator-passive {
+  /* Kapalı makine sadece mat kırmızı durur, parlamaz */
+  box-shadow: inset 0px 2px 4px rgba(0,0,0,0.5); 
+}
