@@ -80,6 +80,12 @@ export default function DashboardScreen() {
 
   useEffect(() => {
     if (Platform.OS === "web") {
+      if (isDarkMode) {
+        document.body.classList.add("dark-mode");
+      } else {
+        document.body.classList.remove("dark-mode");
+      }
+
       const style = document.createElement("style");
       style.innerHTML = `
         ::-webkit-scrollbar { width: 8px; height: 8px; }
@@ -87,6 +93,34 @@ export default function DashboardScreen() {
         ::-webkit-scrollbar-thumb { background: #3b82f6; border-radius: 4px; border: 1px solid ${colors.background.main}; }
         ::-webkit-scrollbar-thumb:hover { background: #60a5fa; }
         * { scrollbar-width: thin; scrollbar-color: #3b82f6 ${isDarkMode ? "#1e2736" : "#e2e8f0"}; }
+
+        /* --- YENİ: ENDÜSTRİYEL FABRİKA ZEMİNİ (GRID) --- */
+        .factory-floor {
+          background-size: 40px 40px;
+          background-image: 
+            linear-gradient(to right, rgba(148, 163, 184, 0.15) 1px, transparent 1px),
+            linear-gradient(to bottom, rgba(148, 163, 184, 0.15) 1px, transparent 1px);
+        }
+
+        /* --- YENİ: HAREKETLİ KAUÇUK KONVEYÖR BANTLAR --- */
+        /* --- HAREKETLİ RULOLU KONVEYÖR BANTLAR --- */
+        /* --- HAREKETLİ RULOLU KONVEYÖR BANTLAR (Daha Kalın ve Yavaş) --- */
+@keyframes moveBeltRight { from { background-position: 0 0; } to { background-position: 40px 0; } }
+@keyframes moveBeltLeft { from { background-position: 40px 0; } to { background-position: 0 0; } }
+@keyframes moveBeltDown { from { background-position: 0 0; } to { background-position: 0 40px; } }
+
+.industrial-belt-h-right, .industrial-belt-h-left {
+  /* Geniş bandın üzerine kalın siyah/koyu gri kauçuk rulo dişleri */
+  background-image: repeating-linear-gradient(90deg, transparent, transparent 32px, rgba(0,0,0,0.85) 32px, rgba(0,0,0,0.85) 40px);
+}
+
+.industrial-belt-v-down {
+  background-image: repeating-linear-gradient(180deg, transparent, transparent 32px, rgba(0,0,0,0.85) 32px, rgba(0,0,0,0.85) 40px);
+  animation: moveBeltDown 1.5s linear infinite;
+}
+
+.industrial-belt-h-right { animation: moveBeltRight 1.5s linear infinite; }
+.industrial-belt-h-left { animation: moveBeltLeft 1.5s linear infinite; }
       `;
       const applyClasses = () => {
         const scrollViews = document.querySelectorAll('[style*="overflow"]');
@@ -1330,6 +1364,9 @@ export default function DashboardScreen() {
                       📍 Merkezi Bul
                     </Text>
                   </TouchableOpacity>
+                  {/* Animated.View İçeriği - index.jsx içindeki mapContainerRef alanının içi */}
+                  {/* Animated.View İçeriği */}
+                  {/* Animated.View İçeriği */}
                   <Animated.View
                     pointerEvents="box-none"
                     style={{
@@ -1343,13 +1380,69 @@ export default function DashboardScreen() {
                       ]
                     }}
                   >
-                    <View style={{ flexDirection: "row", marginRight: 190 }}>
-                      <View style={{ justifyContent: "space-between" }}>
+                    {/* ENDÜSTRİYEL GÜVENLİK ALANI (Factory Floor) */}
+                    <View
+                      {...(Platform.OS === "web"
+                        ? { className: "factory-floor" }
+                        : {})}
+                      style={{
+                        backgroundColor: isDarkMode ? "#0f172a" : "#f8fafc",
+                        borderRadius: 12, // Fabrika köşeleri daha keskin olur
+                        borderWidth: 4,
+                        borderStyle: "dashed", // Kesik güvenlik çizgisi
+                        borderColor: isDarkMode ? "#475569" : "#cbd5e1",
+                        padding: 60,
+                        shadowColor: "#000",
+                        shadowOffset: { width: 0, height: 30 },
+                        shadowOpacity: isDarkMode ? 0.7 : 0.2,
+                        shadowRadius: 40,
+                        elevation: 15
+                      }}
+                    >
+                      {/* ÜST SATIR (İleri Akan Bant) */}
+                      <View
+                        style={{
+                          flexDirection: "row",
+                          position: "relative",
+                          alignItems: "center"
+                        }}
+                      >
+                        {/* Geniş Konveyör Kasa ve Rayları */}
+                        <View
+                          style={{
+                            position: "absolute",
+                            top: "50%",
+                            left: -20,
+                            right: -40, // Köşe birleşimi için uzantı
+                            height: 80, // İSTASYONLARDAN DAHA GENİŞ!
+                            marginTop: -40,
+                            backgroundColor: isDarkMode ? "#020617" : "#cbd5e1", // Kauçuk zemin
+                            borderTopWidth: 8, // Üst kalın metal ray
+                            borderBottomWidth: 8, // Alt kalın metal ray
+                            borderColor: isDarkMode ? "#334155" : "#94a3b8",
+                            zIndex: 1,
+                            overflow: "hidden",
+                            shadowColor: "#000",
+                            shadowOffset: { width: 0, height: 10 },
+                            shadowOpacity: 0.4,
+                            shadowRadius: 10
+                          }}
+                        >
+                          <View
+                            {...(Platform.OS === "web"
+                              ? { className: "industrial-belt-h-right" }
+                              : {})}
+                            style={{ flex: 1, opacity: isDarkMode ? 0.7 : 0.4 }} // Animasyon katmanı
+                          />
+                        </View>
+
+                        {/* İstasyonlar (Padding ile bandın içine oturtuldu) */}
                         <View
                           style={{
                             flexDirection: "row",
-                            gap: 5,
-                            alignSelf: "flex-end"
+                            gap: 16,
+                            zIndex: 2,
+                            paddingVertical: 12
                           }}
                         >
                           {topLine.map((st, idx) => (
@@ -1365,12 +1458,24 @@ export default function DashboardScreen() {
                               direction="up"
                               showArrow={idx >= 2 && (idx - 2) % 5 === 0}
                               colors={colors}
+                              isDarkMode={isDarkMode}
                             />
                           ))}
                         </View>
+                      </View>
+
+                      {/* ORTA METİN VE YAN SATIR */}
+                      <View
+                        style={{
+                          flexDirection: "row",
+                          justifyContent: "space-between",
+                          marginVertical: 30
+                        }}
+                      >
+                        {/* Zemin Yazısı */}
                         <View
                           style={{
-                            height: 50,
+                            flex: 1,
                             alignItems: "center",
                             justifyContent: "center"
                           }}
@@ -1378,24 +1483,133 @@ export default function DashboardScreen() {
                           <Text
                             style={{
                               color: isDarkMode
-                                ? "rgba(255,255,255,0.12)"
-                                : "rgba(0,0,0,0.12)",
-                              fontSize: 28,
+                                ? "rgba(255,255,255,0.03)"
+                                : "rgba(15,23,42,0.05)",
+                              fontSize: 64,
                               fontWeight: "900",
-                              letterSpacing: 6,
+                              letterSpacing: 20,
                               textTransform: "uppercase",
-                              textAlign: "center",
-                              pointerEvents: "none"
+                              pointerEvents: "none",
+                              textAlign: "center"
                             }}
                           >
-                            MONTAJ 2 İSTASYONLARI
+                            MONTAJ 2 HATTI
                           </Text>
                         </View>
+
+                        {/* YAN SATIR (Aşağı Akan Bant) */}
+                        <View
+                          style={{
+                            position: "relative",
+                            justifyContent: "center"
+                          }}
+                        >
+                          {/* Geniş Konveyör Kasa ve Rayları */}
+                          <View
+                            style={{
+                              position: "absolute",
+                              top: -40, // Üst bantla kilitlenir
+                              bottom: -40, // Alt bantla kilitlenir
+                              left: "50%",
+                              width: 80, // Genişlik artırıldı
+                              marginLeft: -40,
+                              backgroundColor: isDarkMode
+                                ? "#020617"
+                                : "#cbd5e1",
+                              borderLeftWidth: 8, // Sol metal ray
+                              borderRightWidth: 8, // Sağ metal ray
+                              borderColor: isDarkMode ? "#334155" : "#94a3b8",
+                              zIndex: 1,
+                              overflow: "hidden",
+                              shadowColor: "#000",
+                              shadowOffset: { width: 0, height: 10 },
+                              shadowOpacity: 0.4,
+                              shadowRadius: 10
+                            }}
+                          >
+                            <View
+                              {...(Platform.OS === "web"
+                                ? { className: "industrial-belt-v-down" }
+                                : {})}
+                              style={{
+                                flex: 1,
+                                opacity: isDarkMode ? 0.7 : 0.4
+                              }}
+                            />
+                          </View>
+
+                          <View
+                            style={{
+                              flexDirection: "column",
+                              gap: 16,
+                              zIndex: 2,
+                              paddingHorizontal: 12
+                            }}
+                          >
+                            {sideLine.map((st, idx) => (
+                              <StationBox
+                                key={st.id}
+                                st={st}
+                                scale={scale}
+                                threshold={ZOOM_THRESHOLD}
+                                showLabel={scale > ZOOM_THRESHOLD}
+                                onSelect={setSelectedStation}
+                                selectedId={selectedStation?.id}
+                                activeStage={activeStage}
+                                direction="right"
+                                showArrow={idx >= 2 && (idx - 2) % 5 === 0}
+                                colors={colors}
+                                isDarkMode={isDarkMode}
+                              />
+                            ))}
+                          </View>
+                        </View>
+                      </View>
+
+                      {/* ALT SATIR (Geri Akan Bant) */}
+                      <View
+                        style={{
+                          flexDirection: "row",
+                          position: "relative",
+                          alignItems: "center"
+                        }}
+                      >
+                        {/* Geniş Konveyör Kasa ve Rayları */}
+                        <View
+                          style={{
+                            position: "absolute",
+                            top: "50%",
+                            left: -20,
+                            right: -40, // Köşe birleşimi
+                            height: 80, // Geniş bant
+                            marginTop: -40,
+                            backgroundColor: isDarkMode ? "#020617" : "#cbd5e1",
+                            borderTopWidth: 8,
+                            borderBottomWidth: 8,
+                            borderColor: isDarkMode ? "#334155" : "#94a3b8",
+                            zIndex: 1,
+                            overflow: "hidden",
+                            shadowColor: "#000",
+                            shadowOffset: { width: 0, height: 10 },
+                            shadowOpacity: 0.4,
+                            shadowRadius: 10
+                          }}
+                        >
+                          <View
+                            {...(Platform.OS === "web"
+                              ? { className: "industrial-belt-h-left" }
+                              : {})}
+                            style={{ flex: 1, opacity: isDarkMode ? 0.7 : 0.4 }}
+                          />
+                        </View>
+
                         <View
                           style={{
                             flexDirection: "row",
-                            gap: 5,
-                            alignSelf: "flex-end"
+                            gap: 16,
+                            alignSelf: "flex-end",
+                            zIndex: 2,
+                            paddingVertical: 12
                           }}
                         >
                           {bottomLine.map((st, idx) => (
@@ -1411,33 +1625,10 @@ export default function DashboardScreen() {
                               direction="down"
                               showArrow={idx >= 2 && (idx - 2) % 5 === 0}
                               colors={colors}
+                              isDarkMode={isDarkMode}
                             />
                           ))}
                         </View>
-                      </View>
-                      <View
-                        style={{
-                          marginLeft: 5,
-                          gap: 5,
-                          flexDirection: "column",
-                          justifyContent: "center"
-                        }}
-                      >
-                        {sideLine.map((st, idx) => (
-                          <StationBox
-                            key={st.id}
-                            st={st}
-                            scale={scale}
-                            threshold={ZOOM_THRESHOLD}
-                            showLabel={scale > ZOOM_THRESHOLD}
-                            onSelect={setSelectedStation}
-                            selectedId={selectedStation?.id}
-                            activeStage={activeStage}
-                            direction="left"
-                            showArrow={idx >= 2 && (idx - 2) % 5 === 0}
-                            colors={colors}
-                          />
-                        ))}
                       </View>
                     </View>
                   </Animated.View>

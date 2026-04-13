@@ -1,7 +1,4 @@
 import { StyleSheet, Platform } from "react-native";
-import { AppTheme } from "../constants/theme";
-
-const { colors } = AppTheme;
 
 export const getDashboardStyles = (colors) =>
   StyleSheet.create({
@@ -11,146 +8,146 @@ export const getDashboardStyles = (colors) =>
       backgroundColor: colors.background.main
     },
     sidebar: {
-      width: 240,
+      width: 260,
       backgroundColor: colors.background.secondary,
       borderRightWidth: 1,
       borderColor: colors.border.default,
-      paddingLeft: 15,
-      paddingTop: 15,
+      paddingHorizontal: 20,
+      paddingTop: 20,
       zIndex: 10,
       overflow: "hidden"
     },
     sidebarHeader: {
-      marginBottom: 15,
+      marginBottom: 20,
       borderBottomWidth: 1,
       borderBottomColor: colors.border.default,
-      paddingBottom: 10,
+      paddingBottom: 15,
       flexDirection: "row",
-      justifyContent: "space-between", // Tema butonuyla başlığı yan yana koymak için
+      justifyContent: "space-between",
       alignItems: "flex-start",
       paddingRight: 10
     },
     sidebarTitle: {
-      color: colors.status.success,
-      fontSize: 16,
+      color: colors.text.main, // HATA BURADAYDI, DÜZELTİLDİ ✅
+      fontSize: 18,
       fontWeight: "900",
       letterSpacing: 1
     },
     sidebarLabel: {
       color: colors.text.muted,
-      fontSize: 10,
+      fontSize: 11,
       fontWeight: "bold",
-      marginBottom: 6,
+      marginBottom: 10,
       letterSpacing: 1
     },
     formSection: {
-      marginBottom: 15,
+      marginBottom: 20,
       backgroundColor: colors.background.main,
-      padding: 10,
+      padding: 15,
       borderRadius: 8,
       borderWidth: 1,
       borderColor: colors.border.default,
       zIndex: 50
     },
     inputGroup: {
-      marginBottom: 10
+      marginBottom: 15
     },
     inputLabel: {
       color: colors.text.muted,
-      fontSize: 11,
-      marginBottom: 4
+      fontSize: 12,
+      marginBottom: 6
     },
     input: {
       backgroundColor: colors.background.secondary,
       color: colors.text.main,
-      paddingHorizontal: 8,
-      paddingVertical: 6,
-      borderRadius: 4,
+      paddingHorizontal: 12,
+      paddingVertical: 8,
+      borderRadius: 6,
       borderWidth: 1,
       borderColor: colors.border.default,
-      fontSize: 12
+      fontSize: 13
     },
     dropdownButton: {
       flexDirection: "row",
       justifyContent: "space-between",
       alignItems: "center",
       backgroundColor: colors.background.secondary,
-      paddingHorizontal: 8,
-      paddingVertical: 6,
-      borderRadius: 4,
+      paddingHorizontal: 12,
+      paddingVertical: 8,
+      borderRadius: 6,
       borderWidth: 1,
       borderColor: colors.border.default
     },
     dropdownList: {
       position: "absolute",
-      top: 45,
+      top: 50,
       left: 0,
       right: 0,
       backgroundColor: colors.background.secondary,
       borderWidth: 1,
       borderColor: colors.border.default,
-      borderRadius: 4,
+      borderRadius: 6,
       elevation: 5,
       zIndex: 100
     },
     dropdownItem: {
-      padding: 8,
+      padding: 10,
       borderBottomWidth: 1,
       borderBottomColor: colors.border.default
     },
     calcBtn: {
       backgroundColor: colors.status.success,
-      padding: 8,
-      borderRadius: 4,
+      padding: 10,
+      borderRadius: 6,
       alignItems: "center",
-      marginTop: 5
+      marginTop: 10
     },
     calcBtnText: {
-      color: colors.text.main,
+      color: "#fff",
       fontWeight: "bold",
-      fontSize: 12
+      fontSize: 13
     },
     menuSection: {
       flex: 1
     },
     menuGroup: {
-      marginBottom: 15
+      marginBottom: 20
     },
     menuItem: {
-      paddingVertical: 8,
-      paddingHorizontal: 8,
-      borderRadius: 6,
-      marginBottom: 4
+      paddingVertical: 10,
+      paddingHorizontal: 12,
+      borderRadius: 8,
+      marginBottom: 6
     },
     menuItemActive: {
       backgroundColor: colors.background.tertiary,
-      borderLeftWidth: 3,
+      borderLeftWidth: 4,
       borderLeftColor: colors.status.primary
     },
     menuItemText: {
       color: colors.text.secondary,
-      fontSize: 12,
+      fontSize: 13,
       fontWeight: "600"
     },
     subMenuContainer: {
-      marginLeft: 10,
+      marginLeft: 15,
       borderLeftWidth: 1,
       borderColor: colors.border.default,
-      paddingLeft: 8,
-      marginTop: 5
+      paddingLeft: 10,
+      marginTop: 8
     },
     subMenuItem: {
-      paddingVertical: 5,
-      paddingHorizontal: 6,
-      borderRadius: 4,
-      marginBottom: 2
+      paddingVertical: 6,
+      paddingHorizontal: 8,
+      borderRadius: 6,
+      marginBottom: 4
     },
     subMenuItemActive: {
-      backgroundColor: "#1e3a8a" // Özel seçim arkaplanı
+      backgroundColor: "rgba(59,130,246,0.15)"
     },
     subMenuText: {
       color: colors.text.muted,
-      fontSize: 11,
+      fontSize: 12,
       fontWeight: "500"
     },
     mainContent: {
@@ -166,13 +163,13 @@ export const getDashboardStyles = (colors) =>
     },
     loadingText: {
       color: colors.text.muted,
-      marginTop: 10,
-      fontSize: 13
+      marginTop: 15,
+      fontSize: 14
     },
     statsHeader: {
       flexDirection: "row",
-      padding: 10,
-      gap: 10,
+      padding: 15,
+      gap: 15,
       backgroundColor: colors.background.secondary,
       borderBottomWidth: 1,
       borderColor: colors.border.default,
@@ -181,26 +178,27 @@ export const getDashboardStyles = (colors) =>
     statCard: {
       flex: 1,
       backgroundColor: colors.background.main,
-      padding: 10,
-      borderRadius: 6,
+      padding: 15,
+      borderRadius: 8,
       borderWidth: 1,
       borderColor: colors.border.default,
       justifyContent: "center"
     },
     statTitle: {
       color: colors.text.muted,
-      fontSize: 10,
-      marginBottom: 2,
+      fontSize: 11,
+      marginBottom: 4,
       fontWeight: "600"
     },
     statValue: {
-      fontSize: 16,
+      fontSize: 18,
       fontWeight: "bold",
       color: colors.text.main
     },
     contentArea: {
       flex: 1,
-      backgroundColor: colors.background.main
+      backgroundColor: colors.background.main,
+      padding: 20
     },
     mapContainer: {
       flex: 1,
@@ -209,28 +207,28 @@ export const getDashboardStyles = (colors) =>
     },
     resetBtn: {
       position: "absolute",
-      top: 10,
-      right: 10,
+      top: 15,
+      right: 15,
       backgroundColor: colors.background.tertiary,
-      paddingHorizontal: 8,
-      paddingVertical: 5,
-      borderRadius: 4,
+      paddingHorizontal: 10,
+      paddingVertical: 6,
+      borderRadius: 6,
       borderWidth: 1,
       borderColor: colors.border.focus,
       zIndex: 20
     },
     placeholderText: {
       color: colors.text.secondary,
-      fontSize: 14,
+      fontSize: 15,
       fontWeight: "500",
       textAlign: "center",
-      lineHeight: 20
+      lineHeight: 22
     },
     workerCard: {
       backgroundColor: colors.background.secondary,
       borderWidth: 1,
       borderColor: colors.border.default,
-      borderRadius: 10,
+      borderRadius: 12,
       overflow: "hidden",
       flex: 1
     },
@@ -239,61 +237,61 @@ export const getDashboardStyles = (colors) =>
       justifyContent: "space-between",
       alignItems: "center",
       backgroundColor: colors.background.tertiary,
-      paddingHorizontal: 15,
-      paddingVertical: 12,
+      paddingHorizontal: 18,
+      paddingVertical: 15,
       borderBottomWidth: 1,
       borderBottomColor: colors.border.default
     },
     workerNameText: {
       color: colors.text.main,
-      fontSize: 14,
+      fontSize: 15,
       fontWeight: "bold"
     },
     workerTimeBadge: {
-      backgroundColor: "rgba(59, 130, 246, 0.15)", // Şeffaflık olduğu için rgba kaldı
-      paddingHorizontal: 10,
-      paddingVertical: 5,
+      backgroundColor: "rgba(59, 130, 246, 0.15)",
+      paddingHorizontal: 12,
+      paddingVertical: 6,
       borderRadius: 6,
       borderWidth: 1,
       borderColor: colors.status.primary
     },
     workerTimeText: {
-      color: "#93c5fd", // Orijinal açık mavi
-      fontSize: 12,
+      color: colors.status.primary,
+      fontSize: 13,
       fontWeight: "bold"
     },
     workerCardBody: {
-      padding: 15,
-      gap: 12
+      padding: 18,
+      gap: 15
     },
     stationGroup: {
       backgroundColor: colors.background.main,
-      padding: 10,
-      borderRadius: 8,
+      padding: 12,
+      borderRadius: 10,
       borderWidth: 1,
       borderColor: colors.border.light
     },
     stationGroupTitle: {
       color: colors.text.muted,
-      fontSize: 12,
+      fontSize: 13,
       fontWeight: "bold",
-      marginBottom: 8
+      marginBottom: 10
     },
     opBadgeContainer: {
       flexDirection: "row",
       flexWrap: "wrap",
-      gap: 6
+      gap: 8
     },
     opBadge: {
       backgroundColor: colors.border.light,
-      paddingHorizontal: 8,
-      paddingVertical: 4,
-      borderRadius: 4,
+      paddingHorizontal: 10,
+      paddingVertical: 6,
+      borderRadius: 6,
       borderWidth: 1,
       borderColor: colors.border.default
     },
     opBadgeText: {
       color: colors.text.secondary,
-      fontSize: 10
+      fontSize: 11
     }
   });

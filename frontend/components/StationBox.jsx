@@ -11,7 +11,8 @@ export default function StationBox({
   activeStage,
   direction,
   showArrow,
-  colors
+  colors,
+  isDarkMode
 }) {
   const isSelected = selectedId === st.id;
   const isGreen = st.status === "green";
@@ -287,29 +288,44 @@ export default function StationBox({
   return (
     <div style={{ position: "relative", display: "inline-block" }}>
       {renderArrowLabel()}
+
       <TouchableOpacity
         activeOpacity={0.8}
         onPress={() => onSelect(st)}
         style={{
-          width: 55,
-          height: 55,
-          borderRadius: 6,
-          borderWidth: 1.5,
+          width: 56,
+          height: 56,
+          borderRadius: 12, // Daha oval hatlar
+          borderWidth: isSelected ? 3 : 2,
           alignItems: "center",
           justifyContent: "center",
-          // Seçiliyken veya durumuna göre arka plan renkleri:
+
+          // Tema renklerine göre dokunsal (tactile) arka planlar
           backgroundColor: isSelected
             ? colors.background.tertiary
             : isGreen
-              ? "rgba(16, 185, 129, 0.2)"
-              : "rgba(239, 68, 68, 0.2)",
+              ? isDarkMode
+                ? "rgba(5, 150, 105, 0.15)"
+                : "#f0fdf4" // Zümrüt yeşili tonları
+              : isDarkMode
+                ? "rgba(220, 38, 38, 0.15)"
+                : "#fef2f2", // Kırmızı tonları
+
           borderColor: isSelected
             ? colors.status.primary
             : isGreen
               ? colors.status.success
               : colors.status.danger,
+
+          // Fiziksel bir obje hissi için gölge
+          shadowColor: isGreen ? colors.status.success : colors.status.danger,
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: isDarkMode ? 0.4 : 0.2,
+          shadowRadius: 4,
+          elevation: 5,
+
           position: "relative",
-          paddingHorizontal: 1
+          paddingHorizontal: 2
         }}
       >
         {showLabel ? (
@@ -318,23 +334,28 @@ export default function StationBox({
             adjustsFontSizeToFit
             minimumFontScale={0.4}
             style={{
-              fontSize: 9.5,
-              fontWeight: "bold",
-              color: colors.text.main,
+              fontSize: 10,
+              fontWeight: "800", // Yazıları daha okunabilir yaptık
+              color: isDarkMode ? "#ffffff" : "#0f172a",
               textAlign: "center",
-              lineHeight: 11
+              lineHeight: 12
             }}
           >
             {cleanedId}
           </Text>
         ) : (
+          // Uzaklaştırıldığında görünen iç ikon/nokta
           <View
             style={{
-              width: 12,
-              height: 12,
-              borderRadius: 6,
-              backgroundColor: colors.text.main,
-              opacity: 0.8
+              width: 16,
+              height: 16,
+              borderRadius: 8,
+              backgroundColor: isGreen
+                ? colors.status.success
+                : colors.status.danger,
+              borderWidth: 2,
+              borderColor: isDarkMode ? "#000" : "#fff",
+              opacity: 0.9
             }}
           />
         )}
@@ -343,21 +364,25 @@ export default function StationBox({
           <View
             style={{
               position: "absolute",
-              top: -8,
-              right: -8,
-              backgroundColor: colors.background.secondary,
-              borderWidth: 1.5,
+              top: -10,
+              right: -10,
+              backgroundColor: isDarkMode ? "#1e293b" : "#ffffff", // Temaya göre rozet zemini
+              borderWidth: 2,
               borderColor: badgeColor,
-              borderRadius: 11,
-              width: 22,
-              height: 22,
+              borderRadius: 14,
+              width: 26,
+              height: 26,
               alignItems: "center",
               justifyContent: "center",
-              zIndex: 5
+              zIndex: 5,
+              shadowColor: "#000",
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.2,
+              shadowRadius: 2
             }}
           >
             <Text
-              style={{ color: badgeColor, fontSize: 11, fontWeight: "bold" }}
+              style={{ color: badgeColor, fontSize: 13, fontWeight: "bold" }}
             >
               {badgeIcon}
             </Text>
