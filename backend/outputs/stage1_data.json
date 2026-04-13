@@ -6,12 +6,19 @@
         "total_production_hours": 1.4162171098845677,
         "active_stations": 72,
         "assigned_count": 72,
-        "solve_duration": 0.3843042850494385,
+        "solve_duration": 0.8700623512268066,
         "target_qty": 247,
         "count_normal": 72,
         "count_master": 0,
         "count_pool": 0,
-        "count_helpers": 0
+        "count_helpers": 0,
+        "init_mad": 150.970330727874,
+        "final_mad": 120.53887053966332,
+        "mad_reduction_pct": 20.15724549419169,
+        "init_bottleneck": 15.405743063563714,
+        "final_bottleneck": 15.405743063563714,
+        "bottleneck_improvement": 0.0,
+        "total_improvements": 36
     },
     "results_flat": [
         [
